@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Loader2, ShieldAlert, ArrowLeft } from "lucide-react";
+import { Loader2, ShieldAlert, ArrowLeft, AlertTriangle, Wallet, ExternalLink } from "lucide-react";
 import { BgFx } from "@/components/mws/bg-fx";
 import { Logo } from "@/components/mws/logo";
 import { useProfile } from "@/hooks/use-profile";
@@ -11,6 +11,7 @@ import { getSettings } from "@/lib/mws.functions";
 import {
   adminBroadcast,
   adminGetSummary,
+  adminListDeposits,
   adminListLocks,
   adminListPendingWithdrawals,
   adminListUsers,
@@ -25,13 +26,15 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-const TABS = ["Overview", "Withdrawals", "Users", "Capital Locks", "Settings", "Announcements"] as const;
+const TABS = ["Overview", "Deposits", "Withdrawals", "Users", "Capital Locks", "Settings", "Announcements"] as const;
 type Tab = (typeof TABS)[number];
 
 function AdminPage() {
   const { data: profile, isLoading, hydrated } = useProfile();
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("Overview");
+  const settingsFn = useServerFn(getSettings);
+  const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: () => settingsFn() });
 
   useEffect(() => {
     if (hydrated && !isLoading && !profile) navigate({ to: "/auth" });
@@ -61,8 +64,10 @@ function AdminPage() {
         </Link>
       </header>
 
-      <div className="mx-auto max-w-7xl px-6 pb-16">
-        <div className="mb-6 flex flex-wrap gap-2">
+      <div className="mx-auto max-w-7xl px-6 pb-16 space-y-5">
+        <SystemBanner settings={settings} />
+
+        <div className="flex flex-wrap gap-2">
           {TABS.map((t) => (
             <button
               key={t}
@@ -77,6 +82,7 @@ function AdminPage() {
         </div>
 
         {tab === "Overview" && <Overview />}
+        {tab === "Deposits" && <Deposits />}
         {tab === "Withdrawals" && <Withdrawals />}
         {tab === "Users" && <Users />}
         {tab === "Capital Locks" && <Locks />}
@@ -84,6 +90,56 @@ function AdminPage() {
         {tab === "Announcements" && <Announcements />}
       </div>
     </div>
+  );
+}
+
+function SystemBanner({ settings }: { settings: Record<string, unknown> | undefined }) {
+  const qc = useQueryClient();
+  const upd = useServerFn(adminUpdateSettings);
+  const toggle = useMutation({
+    mutationFn: (patch: { maintenance_mode?: boolean; demo_deposit_mode?: boolean }) => upd({ data: patch }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["settings"] }); toast.success("Updated"); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  if (!settings) return null;
+  const maintenance = !!settings.maintenance_mode;
+  const demo = !!settings.demo_deposit_mode;
+  return (
+    <div className="grid gap-3 md:grid-cols-2">
+      <div className={`glass-strong flex items-center justify-between rounded-2xl p-4 ${maintenance ? "border border-red-500/40" : ""}`}>
+        <div className="flex items-center gap-3">
+          <AlertTriangle className={`h-5 w-5 ${maintenance ? "text-red-400" : "text-muted-foreground"}`} />
+          <div>
+            <div className="text-sm font-semibold">Maintenance Mode</div>
+            <div className="text-xs text-muted-foreground">Blocks activations, claims and withdrawals.</div>
+          </div>
+        </div>
+        <Toggle checked={maintenance} onChange={(v) => toggle.mutate({ maintenance_mode: v })} />
+      </div>
+      <div className={`glass-strong flex items-center justify-between rounded-2xl p-4 ${demo ? "border border-amber-500/40" : "border border-emerald-500/40"}`}>
+        <div className="flex items-center gap-3">
+          <Wallet className={`h-5 w-5 ${demo ? "text-amber-300" : "text-emerald-300"}`} />
+          <div>
+            <div className="text-sm font-semibold">Demo Deposit Mode</div>
+            <div className="text-xs text-muted-foreground">
+              {demo ? "One-click package activation (testing)." : "On-chain USDT (BEP20) required."}
+            </div>
+          </div>
+        </div>
+        <Toggle checked={demo} onChange={(v) => toggle.mutate({ demo_deposit_mode: v })} />
+      </div>
+    </div>
+  );
+}
+
+function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      onClick={() => onChange(!checked)}
+      className={`relative h-7 w-12 rounded-full transition ${checked ? "[background:var(--gradient-primary)]" : "bg-white/10"}`}
+    >
+      <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition ${checked ? "left-[22px]" : "left-0.5"}`} />
+    </button>
   );
 }
 
@@ -99,7 +155,7 @@ function Overview() {
   });
   return (
     <div className="space-y-5">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <Card label="Users" value={String(data?.users ?? 0)} />
         <Card label="Total Investment" value={`$${Number(data?.totalInvestment ?? 0).toFixed(2)}`} />
         <Card label="Total Paid Out" value={`$${Number(data?.totalPaidOut ?? 0).toFixed(2)}`} />
@@ -120,6 +176,60 @@ function Overview() {
   );
 }
 
+function Deposits() {
+  const fn = useServerFn(adminListDeposits);
+  const { data } = useQuery({ queryKey: ["admin", "deposits"], queryFn: () => fn() });
+  return (
+    <div className="glass-strong overflow-x-auto rounded-3xl">
+      <table className="w-full text-sm">
+        <thead className="text-left text-xs uppercase tracking-widest text-muted-foreground">
+          <tr>
+            <th className="px-5 py-3">Date</th>
+            <th className="px-5 py-3">User</th>
+            <th className="px-5 py-3">Package</th>
+            <th className="px-5 py-3">Tx Hash</th>
+            <th className="px-5 py-3">Status</th>
+            <th className="px-5 py-3">Note</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-border/60">
+          {((data as any) ?? []).map((d: {
+            id: string; created_at: string; package_amount: number; tx_hash: string;
+            status: string; note: string | null; profiles: { username: string };
+          }) => (
+            <tr key={d.id}>
+              <td className="px-5 py-3 text-xs text-muted-foreground">{new Date(d.created_at).toLocaleString()}</td>
+              <td className="px-5 py-3">{d.profiles?.username}</td>
+              <td className="px-5 py-3 font-mono">${Number(d.package_amount).toFixed(0)}</td>
+              <td className="px-5 py-3">
+                <a
+                  href={`https://bscscan.com/tx/${d.tx_hash}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 font-mono text-[11px] text-primary hover:underline"
+                >
+                  {d.tx_hash.slice(0, 10)}…{d.tx_hash.slice(-6)} <ExternalLink className="h-3 w-3" />
+                </a>
+              </td>
+              <td className="px-5 py-3">
+                <span className={`rounded-full px-2 py-0.5 text-[10px] capitalize ${
+                  d.status === "verified" ? "bg-emerald-500/20 text-emerald-300"
+                    : d.status === "pending" ? "bg-amber-500/20 text-amber-300"
+                    : "bg-red-500/20 text-red-300"
+                }`}>{d.status}</span>
+              </td>
+              <td className="px-5 py-3 text-xs text-muted-foreground max-w-xs truncate">{d.note}</td>
+            </tr>
+          ))}
+          {(data ?? []).length === 0 && (
+            <tr><td colSpan={6} className="px-5 py-8 text-center text-muted-foreground">No deposits yet.</td></tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function Withdrawals() {
   const fn = useServerFn(adminListPendingWithdrawals);
   const reviewFn = useServerFn(adminReviewWithdrawal);
@@ -131,7 +241,7 @@ function Withdrawals() {
     onError: (e: Error) => toast.error(e.message),
   });
   return (
-    <div className="glass-strong overflow-hidden rounded-3xl">
+    <div className="glass-strong overflow-x-auto rounded-3xl">
       <table className="w-full text-sm">
         <thead className="text-left text-xs uppercase tracking-widest text-muted-foreground">
           <tr><th className="px-5 py-3">Date</th><th className="px-5 py-3">User</th><th className="px-5 py-3">Kind</th><th className="px-5 py-3">Amount</th><th className="px-5 py-3">Wallet</th><th className="px-5 py-3">Status</th><th className="px-5 py-3"></th></tr>
@@ -171,7 +281,7 @@ function Users() {
   const fn = useServerFn(adminListUsers);
   const { data } = useQuery({ queryKey: ["admin", "users"], queryFn: () => fn() });
   return (
-    <div className="glass-strong overflow-hidden rounded-3xl">
+    <div className="glass-strong overflow-x-auto rounded-3xl">
       <table className="w-full text-sm">
         <thead className="text-left text-xs uppercase tracking-widest text-muted-foreground">
           <tr><th className="px-5 py-3">Username</th><th className="px-5 py-3">Wallet</th><th className="px-5 py-3">Sponsor Code</th><th className="px-5 py-3">Joined</th></tr>
@@ -203,7 +313,7 @@ function Locks() {
   });
   const now = Date.now();
   return (
-    <div className="glass-strong overflow-hidden rounded-3xl">
+    <div className="glass-strong overflow-x-auto rounded-3xl">
       <table className="w-full text-sm">
         <thead className="text-left text-xs uppercase tracking-widest text-muted-foreground">
           <tr><th className="px-5 py-3">User</th><th className="px-5 py-3">Amount</th><th className="px-5 py-3">Unlock At</th><th className="px-5 py-3">Status</th><th className="px-5 py-3"></th></tr>
@@ -239,10 +349,23 @@ function SettingsTab() {
   const updFn = useServerFn(adminUpdateSettings);
   const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ["settings"], queryFn: () => fn() });
-  const [form, setForm] = useState<{ daily_pct?: number; l1_pct?: number; l2_pct?: number; l3_pct?: number; min_directs_for_all_levels?: number; maintenance_mode?: boolean }>({});
+  const [form, setForm] = useState<{
+    daily_pct?: number; l1_pct?: number; l2_pct?: number; l3_pct?: number;
+    min_directs_for_all_levels?: number; maintenance_mode?: boolean;
+    demo_deposit_mode?: boolean; deposit_wallet_address?: string;
+    deposit_min_confirmations?: number; deposit_token_contract?: string;
+  }>({});
   useEffect(() => { if (data) setForm({
-    daily_pct: Number(data.daily_pct), l1_pct: Number(data.l1_pct), l2_pct: Number(data.l2_pct), l3_pct: Number(data.l3_pct),
-    min_directs_for_all_levels: Number(data.min_directs_for_all_levels), maintenance_mode: !!data.maintenance_mode,
+    daily_pct: Number((data as any).daily_pct),
+    l1_pct: Number((data as any).l1_pct),
+    l2_pct: Number((data as any).l2_pct),
+    l3_pct: Number((data as any).l3_pct),
+    min_directs_for_all_levels: Number((data as any).min_directs_for_all_levels),
+    maintenance_mode: !!(data as any).maintenance_mode,
+    demo_deposit_mode: !!(data as any).demo_deposit_mode,
+    deposit_wallet_address: (data as any).deposit_wallet_address ?? "",
+    deposit_min_confirmations: Number((data as any).deposit_min_confirmations ?? 5),
+    deposit_token_contract: (data as any).deposit_token_contract ?? "",
   }); }, [data]);
   const mut = useMutation({
     mutationFn: () => updFn({ data: form }),
@@ -250,22 +373,54 @@ function SettingsTab() {
     onError: (e: Error) => toast.error(e.message),
   });
   return (
-    <div className="glass-strong rounded-3xl p-6 max-w-2xl space-y-4">
-      <h2 className="font-display text-lg font-semibold">System Settings</h2>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <NumField label="Daily %" value={form.daily_pct} step={0.25} onChange={(v) => setForm({ ...form, daily_pct: v })} />
-        <NumField label="L1 commission %" value={form.l1_pct} onChange={(v) => setForm({ ...form, l1_pct: v })} />
-        <NumField label="L2 commission %" value={form.l2_pct} onChange={(v) => setForm({ ...form, l2_pct: v })} />
-        <NumField label="L3 commission %" value={form.l3_pct} onChange={(v) => setForm({ ...form, l3_pct: v })} />
-        <NumField label="Min directs for L2/L3" value={form.min_directs_for_all_levels} onChange={(v) => setForm({ ...form, min_directs_for_all_levels: v })} />
+    <div className="grid gap-5 lg:grid-cols-2">
+      <div className="glass-strong rounded-3xl p-6 space-y-4">
+        <h2 className="font-display text-lg font-semibold">Yield & Commissions</h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <NumField label="Daily %" value={form.daily_pct} step={0.25} onChange={(v) => setForm({ ...form, daily_pct: v })} />
+          <NumField label="L1 commission %" value={form.l1_pct} onChange={(v) => setForm({ ...form, l1_pct: v })} />
+          <NumField label="L2 commission %" value={form.l2_pct} onChange={(v) => setForm({ ...form, l2_pct: v })} />
+          <NumField label="L3 commission %" value={form.l3_pct} onChange={(v) => setForm({ ...form, l3_pct: v })} />
+          <NumField label="Min directs for L2/L3" value={form.min_directs_for_all_levels} onChange={(v) => setForm({ ...form, min_directs_for_all_levels: v })} />
+        </div>
       </div>
-      <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" checked={!!form.maintenance_mode} onChange={(e) => setForm({ ...form, maintenance_mode: e.target.checked })} />
-        Maintenance mode (blocks activation / claim / withdrawals)
-      </label>
-      <button onClick={() => mut.mutate()} disabled={mut.isPending} className="inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold text-primary-foreground [background:var(--gradient-primary)] glow disabled:opacity-60">
-        {mut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Settings"}
-      </button>
+
+      <div className="glass-strong rounded-3xl p-6 space-y-4">
+        <h2 className="font-display text-lg font-semibold">On-chain Deposits (USDT BEP20)</h2>
+        <label className="flex items-center gap-3 text-sm">
+          <Toggle checked={!!form.demo_deposit_mode} onChange={(v) => setForm({ ...form, demo_deposit_mode: v })} />
+          <span>Demo mode <span className="text-xs text-muted-foreground">(one-click activate; skip on-chain check)</span></span>
+        </label>
+        <label className="flex items-center gap-3 text-sm">
+          <Toggle checked={!!form.maintenance_mode} onChange={(v) => setForm({ ...form, maintenance_mode: v })} />
+          <span>Maintenance mode</span>
+        </label>
+        <TextField
+          label="Deposit wallet (BEP20)"
+          value={form.deposit_wallet_address ?? ""}
+          onChange={(v) => setForm({ ...form, deposit_wallet_address: v })}
+          placeholder="0x…"
+        />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <NumField
+            label="Min confirmations"
+            value={form.deposit_min_confirmations}
+            onChange={(v) => setForm({ ...form, deposit_min_confirmations: v })}
+          />
+          <TextField
+            label="USDT contract (BEP20)"
+            value={form.deposit_token_contract ?? ""}
+            onChange={(v) => setForm({ ...form, deposit_token_contract: v })}
+            placeholder="0x55d398326f99059ff775485246999027b3197955"
+          />
+        </div>
+      </div>
+
+      <div className="lg:col-span-2 flex justify-end">
+        <button onClick={() => mut.mutate()} disabled={mut.isPending} className="inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold text-primary-foreground [background:var(--gradient-primary)] glow disabled:opacity-60">
+          {mut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Settings"}
+        </button>
+      </div>
     </div>
   );
 }
@@ -305,6 +460,15 @@ function NumField({ label, value, step = 1, onChange }: { label: string; value?:
     <label className="block text-sm">
       <div className="mb-2 text-xs uppercase text-muted-foreground">{label}</div>
       <input type="number" step={step} value={value ?? ""} onChange={(e) => onChange(Number(e.target.value))} className="w-full rounded-xl border border-border bg-white/5 px-4 py-2.5 font-mono text-sm outline-none focus:border-primary" />
+    </label>
+  );
+}
+
+function TextField({ label, value, placeholder, onChange }: { label: string; value: string; placeholder?: string; onChange: (v: string) => void }) {
+  return (
+    <label className="block text-sm">
+      <div className="mb-2 text-xs uppercase text-muted-foreground">{label}</div>
+      <input type="text" value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} className="w-full rounded-xl border border-border bg-white/5 px-4 py-2.5 font-mono text-xs outline-none focus:border-primary" />
     </label>
   );
 }

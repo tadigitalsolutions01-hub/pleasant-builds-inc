@@ -62,7 +62,13 @@ function AuthPage() {
   const [selected, setSelected] = useState<WalletId | null>(null);
   const [address, setAddress] = useState<string | null>(null);
   const [signature, setSignature] = useState<string | null>(null);
-  const [sponsor, setSponsor] = useState("MWS-GENESIS");
+  const [sponsor, setSponsor] = useState(() => {
+    if (typeof window === "undefined") return "MWS-GENESIS";
+    const raw = new URLSearchParams(window.location.search).get("ref") ?? "";
+    // Extract a valid sponsor code even if the ref value was mangled (e.g. full URL pasted in).
+    const match = raw.toUpperCase().match(/MWS-[A-Z0-9]{4,10}/);
+    return match ? match[0] : "MWS-GENESIS";
+  });
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 

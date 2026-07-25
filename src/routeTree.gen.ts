@@ -10,12 +10,14 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as LoginRouteImport } from './routes/login'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/app'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppProfileRouteImport } from './routes/app.profile'
 import { Route as AppPackagesRouteImport } from './routes/app.packages'
+import { Route as AppNotificationsRouteImport } from './routes/app.notifications'
 import { Route as AppAiRobotRouteImport } from './routes/app.ai-robot'
 import { Route as AppWithdrawalIncomeRouteImport } from './routes/app.withdrawal.income'
 import { Route as AppWithdrawalCapitalRouteImport } from './routes/app.withdrawal.capital'
@@ -32,14 +34,19 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoute = AppRouteImport.update({
   id: '/app',
   path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -60,6 +67,11 @@ const AppProfileRoute = AppProfileRouteImport.update({
 const AppPackagesRoute = AppPackagesRouteImport.update({
   id: '/packages',
   path: '/packages',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNotificationsRoute = AppNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAiRobotRoute = AppAiRobotRouteImport.update({
@@ -115,10 +127,12 @@ const AppHistoryDirectRoute = AppHistoryDirectRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/app': typeof AppRouteWithChildren
-  '/login': typeof LoginRoute
+  '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/app/ai-robot': typeof AppAiRobotRoute
+  '/app/notifications': typeof AppNotificationsRoute
   '/app/packages': typeof AppPackagesRoute
   '/app/profile': typeof AppProfileRoute
   '/app/': typeof AppIndexRoute
@@ -134,9 +148,11 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/login': typeof LoginRoute
+  '/admin': typeof AdminRoute
+  '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/app/ai-robot': typeof AppAiRobotRoute
+  '/app/notifications': typeof AppNotificationsRoute
   '/app/packages': typeof AppPackagesRoute
   '/app/profile': typeof AppProfileRoute
   '/app': typeof AppIndexRoute
@@ -153,10 +169,12 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/app': typeof AppRouteWithChildren
-  '/login': typeof LoginRoute
+  '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/app/ai-robot': typeof AppAiRobotRoute
+  '/app/notifications': typeof AppNotificationsRoute
   '/app/packages': typeof AppPackagesRoute
   '/app/profile': typeof AppProfileRoute
   '/app/': typeof AppIndexRoute
@@ -174,10 +192,12 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/app'
-    | '/login'
+    | '/auth'
     | '/sitemap.xml'
     | '/app/ai-robot'
+    | '/app/notifications'
     | '/app/packages'
     | '/app/profile'
     | '/app/'
@@ -193,9 +213,11 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/login'
+    | '/admin'
+    | '/auth'
     | '/sitemap.xml'
     | '/app/ai-robot'
+    | '/app/notifications'
     | '/app/packages'
     | '/app/profile'
     | '/app'
@@ -211,10 +233,12 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/app'
-    | '/login'
+    | '/auth'
     | '/sitemap.xml'
     | '/app/ai-robot'
+    | '/app/notifications'
     | '/app/packages'
     | '/app/profile'
     | '/app/'
@@ -231,8 +255,9 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   AppRoute: typeof AppRouteWithChildren
-  LoginRoute: typeof LoginRoute
+  AuthRoute: typeof AuthRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
 }
 
@@ -245,11 +270,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app': {
@@ -257,6 +282,13 @@ declare module '@tanstack/react-router' {
       path: '/app'
       fullPath: '/app'
       preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -285,6 +317,13 @@ declare module '@tanstack/react-router' {
       path: '/packages'
       fullPath: '/app/packages'
       preLoaderRoute: typeof AppPackagesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/notifications': {
+      id: '/app/notifications'
+      path: '/notifications'
+      fullPath: '/app/notifications'
+      preLoaderRoute: typeof AppNotificationsRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/ai-robot': {
@@ -362,6 +401,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppAiRobotRoute: typeof AppAiRobotRoute
+  AppNotificationsRoute: typeof AppNotificationsRoute
   AppPackagesRoute: typeof AppPackagesRoute
   AppProfileRoute: typeof AppProfileRoute
   AppIndexRoute: typeof AppIndexRoute
@@ -378,6 +418,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppAiRobotRoute: AppAiRobotRoute,
+  AppNotificationsRoute: AppNotificationsRoute,
   AppPackagesRoute: AppPackagesRoute,
   AppProfileRoute: AppProfileRoute,
   AppIndexRoute: AppIndexRoute,
@@ -396,8 +437,9 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   AppRoute: AppRouteWithChildren,
-  LoginRoute: LoginRoute,
+  AuthRoute: AuthRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
 }
 export const routeTree = rootRouteImport

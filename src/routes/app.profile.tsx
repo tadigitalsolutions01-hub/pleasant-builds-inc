@@ -1,65 +1,87 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Camera } from "lucide-react";
-import { useUser } from "@/hooks/use-user";
-import { saveUser } from "@/lib/mock-store";
+import { Loader2 } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { useProfile } from "@/hooks/use-profile";
+import { updateMyProfile } from "@/lib/mws.functions";
 
 export const Route = createFileRoute("/app/profile")({
-  head: () => ({ meta: [{ title: "Profile · Meta World Space" }, { name: "description", content: "Update your Meta World Space profile." }] }),
+  head: () => ({ meta: [{ title: "Profile · Meta Word Space" }, { name: "description", content: "Update your Meta Word Space profile." }] }),
   component: ProfilePage,
 });
 
 function ProfilePage() {
-  const { user } = useUser();
-  const [username, setUsername] = useState(user?.username ?? "");
-  const [seed, setSeed] = useState(user?.avatarSeed ?? "");
+  const { data: profile } = useProfile();
+  const [username, setUsername] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const qc = useQueryClient();
+  const updateFn = useServerFn(updateMyProfile);
 
-  if (!user) return null;
+  useEffect(() => {
+    if (profile) {
+      setUsername(profile.username);
+      setAvatarUrl(profile.avatar_url ?? "");
+    }
+  }, [profile]);
 
-  function save() {
-    if (!user) return;
-    saveUser({ ...user, username, avatarSeed: seed });
-    toast.success("Profile updated");
-  }
+  const mut = useMutation({
+    mutationFn: () => updateFn({ data: { username, avatar_url: avatarUrl } }),
+    onSuccess: () => {
+      toast.success("Profile updated");
+      qc.invalidateQueries({ queryKey: ["profile"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  if (!profile) return null;
 
   return (
     <div className="space-y-6">
       <h1 className="font-display text-3xl font-bold">Profile Settings</h1>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_2fr]">
-        <div className="glass-strong flex flex-col items-center rounded-3xl p-6">
-          <div className="relative">
-            <div className="absolute inset-0 animate-spin-slow rounded-full [background:var(--gradient-ring)] opacity-70 blur-sm" />
-            <div className="relative grid h-32 w-32 place-items-center rounded-full bg-background font-display text-4xl font-bold">
-              {username.slice(-2).toUpperCase()}
-            </div>
+      <div className="glass-strong grid gap-6 rounded-3xl p-6 lg:grid-cols-[240px_1fr]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="grid h-32 w-32 place-items-center overflow-hidden rounded-full [background:var(--gradient-primary)] font-display text-3xl font-bold text-primary-foreground">
+            {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : username.slice(-2).toUpperCase()}
           </div>
-          <button className="mt-4 inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-xs">
-            <Camera className="h-3.5 w-3.5" /> Change picture
-          </button>
-          <div className="mt-4 font-mono text-[11px] text-muted-foreground">{user.wallet}</div>
+          <div className="text-center font-mono text-[11px] text-muted-foreground">
+            {profile.wallet_address.slice(0, 10)}…{profile.wallet_address.slice(-6)}
+          </div>
+          <div className="glass rounded-full px-3 py-1 font-mono text-[11px]">Sponsor {profile.sponsor_code}</div>
         </div>
 
-        <div className="glass-strong rounded-3xl p-6">
+        <div className="space-y-4">
           <Field label="Username">
-            <input value={username} onChange={(e) => setUsername(e.target.value)}
-              className="w-full rounded-xl border border-border bg-white/5 px-4 py-3 text-sm outline-none focus:border-primary" />
+            <input
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full rounded-xl border border-border bg-white/5 px-4 py-3 text-sm outline-none focus:border-primary"
+              maxLength={40}
+            />
           </Field>
-          <Field label="Avatar seed">
-            <input value={seed} onChange={(e) => setSeed(e.target.value)}
-              className="w-full rounded-xl border border-border bg-white/5 px-4 py-3 font-mono text-sm outline-none focus:border-primary" />
+          <Field label="Avatar URL">
+            <input
+              value={avatarUrl}
+              onChange={(e) => setAvatarUrl(e.target.value)}
+              className="w-full rounded-xl border border-border bg-white/5 px-4 py-3 text-sm outline-none focus:border-primary"
+              placeholder="https://…"
+            />
+            <p className="mt-2 text-[11px] text-muted-foreground">Paste any public image URL.</p>
           </Field>
-          <Field label="Sponsor ID">
-            <input value={user.sponsorId} readOnly
-              className="w-full rounded-xl border border-border bg-white/5 px-4 py-3 font-mono text-sm text-muted-foreground" />
+          <Field label="Joined">
+            <div className="rounded-xl border border-border/50 bg-white/5 px-4 py-3 font-mono text-xs text-muted-foreground">
+              {new Date(profile.joined_at).toLocaleString()}
+            </div>
           </Field>
-          <Field label="Wallet Provider">
-            <input value={user.walletProvider} readOnly
-              className="w-full rounded-xl border border-border bg-white/5 px-4 py-3 text-sm text-muted-foreground" />
-          </Field>
-          <button onClick={save} className="mt-4 rounded-full px-6 py-2.5 text-sm font-semibold text-primary-foreground [background:var(--gradient-primary)] glow">
-            Save changes
+
+          <button
+            onClick={() => mut.mutate()}
+            disabled={mut.isPending}
+            className="flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold text-primary-foreground [background:var(--gradient-primary)] glow disabled:opacity-60"
+          >
+            {mut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save changes"}
           </button>
         </div>
       </div>
@@ -69,7 +91,7 @@ function ProfilePage() {
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label className="mb-4 block">
+    <label className="block">
       <div className="mb-2 text-xs uppercase tracking-widest text-muted-foreground">{label}</div>
       {children}
     </label>

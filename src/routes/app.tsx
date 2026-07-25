@@ -1,13 +1,14 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   LayoutDashboard, Package, History, ArrowDownToLine, Users, Settings, Bot,
-  ChevronDown, LogOut, Menu, Wallet as WalletIcon, X,
+  ChevronDown, LogOut, Menu, Wallet as WalletIcon, X, Bell, ShieldAlert,
 } from "lucide-react";
 import { Logo } from "@/components/mws/logo";
 import { BgFx } from "@/components/mws/bg-fx";
-import { useUser } from "@/hooks/use-user";
-import { clearUser } from "@/lib/mock-store";
+import { supabase } from "@/integrations/supabase/client";
+import { useProfile } from "@/hooks/use-profile";
 
 export const Route = createFileRoute("/app")({
   component: AppLayout,
@@ -25,9 +26,9 @@ const NAV: NavItem[] = [
   { label: "Packages", icon: Package, to: "/app/packages" },
   {
     label: "History", icon: History, children: [
-      { label: "Team Commission", to: "/app/history/team" },
-      { label: "Direct Commission", to: "/app/history/direct" },
       { label: "Passive Income", to: "/app/history/passive" },
+      { label: "Direct Commission", to: "/app/history/direct" },
+      { label: "Team Commission", to: "/app/history/team" },
     ]
   },
   {
@@ -44,20 +45,53 @@ const NAV: NavItem[] = [
       { label: "Level 3", to: "/app/team/level-3" },
     ]
   },
+  { label: "Notifications", icon: Bell, to: "/app/notifications" },
   { label: "Profile", icon: Settings, to: "/app/profile" },
   { label: "AI Robot", icon: Bot, to: "/app/ai-robot" },
 ];
 
 function AppLayout() {
-  const { user, hydrated } = useUser();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const qc = useQueryClient();
+  const { data: profile, isLoading, hydrated } = useProfile();
 
   useEffect(() => {
-    if (hydrated && !user) navigate({ to: "/login" });
-  }, [hydrated, user, navigate]);
+    if (hydrated && !isLoading && !profile) {
+      // No session
+      navigate({ to: "/auth" });
+    }
+  }, [hydrated, isLoading, profile, navigate]);
 
-  if (!hydrated || !user) {
+  // Realtime notifications
+  useEffect(() => {
+    if (!profile?.id) return;
+    const channel = supabase
+      .channel("mws-user-" + profile.id)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${profile.id}` },
+        () => {
+          qc.invalidateQueries({ queryKey: ["notifications"] });
+          qc.invalidateQueries({ queryKey: ["stats"] });
+          qc.invalidateQueries({ queryKey: ["activities"] });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "ledger_entries", filter: `user_id=eq.${profile.id}` },
+        () => {
+          qc.invalidateQueries({ queryKey: ["stats"] });
+          qc.invalidateQueries({ queryKey: ["activities"] });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile?.id, qc]);
+
+  if (!hydrated || isLoading || !profile) {
     return (
       <div className="grid min-h-screen place-items-center">
         <BgFx />
@@ -66,11 +100,13 @@ function AppLayout() {
     );
   }
 
+  const initials = profile.username.slice(-2).toUpperCase();
+  const shortWallet = `${profile.wallet_address.slice(0, 6)}…${profile.wallet_address.slice(-4)}`;
+
   return (
     <div className="relative min-h-screen">
       <BgFx />
       <div className="mx-auto flex max-w-[1600px]">
-        {/* Sidebar */}
         <aside
           className={`fixed inset-y-0 left-0 z-40 w-72 transform border-r border-border/60 bg-[oklch(0.12_0.03_265)/95%] backdrop-blur-xl transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${
             open ? "translate-x-0" : "-translate-x-full"
@@ -82,18 +118,36 @@ function AppLayout() {
           </div>
           <nav className="flex flex-col gap-1 px-3">
             {NAV.map((item) => <SidebarItem key={item.label} item={item} onNavigate={() => setOpen(false)} />)}
+            {profile.isAdmin && (
+              <Link
+                to="/admin"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition hover:bg-white/5 hover:text-foreground"
+                activeProps={{ className: "!text-foreground !bg-white/5" }}
+              >
+                <ShieldAlert className="h-4 w-4" /> Admin Panel
+              </Link>
+            )}
           </nav>
           <div className="absolute inset-x-3 bottom-4">
             <div className="glass rounded-2xl p-3">
               <div className="flex items-center gap-3">
-                <div className="grid h-9 w-9 place-items-center rounded-full [background:var(--gradient-primary)] text-xs font-bold text-primary-foreground">
-                  {user.username.slice(-2).toUpperCase()}
+                <div className="grid h-9 w-9 place-items-center rounded-full [background:var(--gradient-primary)] text-xs font-bold text-primary-foreground overflow-hidden">
+                  {profile.avatar_url ? <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" /> : initials}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-semibold">{user.username}</div>
-                  <div className="truncate font-mono text-[10px] text-muted-foreground">{user.wallet.slice(0,6)}…{user.wallet.slice(-4)}</div>
+                  <div className="truncate text-sm font-semibold">{profile.username}</div>
+                  <div className="truncate font-mono text-[10px] text-muted-foreground">{shortWallet}</div>
                 </div>
-                <button onClick={() => { clearUser(); navigate({ to: "/" }); }} className="text-muted-foreground hover:text-foreground">
+                <button
+                  onClick={async () => {
+                    await qc.cancelQueries();
+                    qc.clear();
+                    await supabase.auth.signOut();
+                    navigate({ to: "/auth", replace: true });
+                  }}
+                  className="text-muted-foreground hover:text-foreground"
+                >
                   <LogOut className="h-4 w-4" />
                 </button>
               </div>
@@ -101,7 +155,6 @@ function AppLayout() {
           </div>
         </aside>
 
-        {/* Main */}
         <div className="min-w-0 flex-1">
           <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border/60 bg-[oklch(0.14_0.03_265)/75%] px-4 py-3 backdrop-blur-xl lg:px-8">
             <button className="lg:hidden" onClick={() => setOpen(true)}><Menu className="h-5 w-5" /></button>
@@ -111,15 +164,21 @@ function AppLayout() {
                 <span className="text-muted-foreground">AI Core</span>
                 <span className="font-mono">ONLINE</span>
               </span>
-              <span className="font-mono text-xs text-muted-foreground">CYCLE #48,214</span>
+              <span className="font-mono text-xs text-muted-foreground">SPONSOR {profile.sponsor_code}</span>
             </div>
             <div className="flex items-center gap-3">
+              <Link
+                to="/app/notifications"
+                className="glass grid h-9 w-9 place-items-center rounded-full text-muted-foreground hover:text-foreground"
+              >
+                <Bell className="h-4 w-4" />
+              </Link>
               <div className="glass hidden items-center gap-2 rounded-full px-3 py-1.5 text-xs sm:flex">
                 <WalletIcon className="h-3.5 w-3.5 text-[oklch(0.85_0.19_210)]" />
-                <span className="font-mono">{user.wallet.slice(0,6)}…{user.wallet.slice(-4)}</span>
+                <span className="font-mono">{shortWallet}</span>
               </div>
-              <div className="grid h-9 w-9 place-items-center rounded-full [background:var(--gradient-primary)] text-xs font-bold text-primary-foreground">
-                {user.username.slice(-2).toUpperCase()}
+              <div className="grid h-9 w-9 place-items-center overflow-hidden rounded-full [background:var(--gradient-primary)] text-xs font-bold text-primary-foreground">
+                {profile.avatar_url ? <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" /> : initials}
               </div>
             </div>
           </header>
@@ -175,7 +234,7 @@ function SidebarItem({ item, onNavigate }: { item: NavItem; onNavigate: () => vo
     <Link
       to={item.to!} onClick={onNavigate}
       className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition hover:bg-white/5 hover:text-foreground"
-      activeProps={{ className: "!text-foreground !bg-white/5 relative before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-6 before:w-0.5 before:rounded-r before:[background:var(--gradient-primary)]" }}
+      activeProps={{ className: "!text-foreground !bg-white/5" }}
       activeOptions={{ exact: true }}
     >
       <Icon className="h-4 w-4" /> {item.label}

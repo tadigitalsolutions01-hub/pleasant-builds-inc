@@ -137,7 +137,7 @@ function Withdrawals() {
           <tr><th className="px-5 py-3">Date</th><th className="px-5 py-3">User</th><th className="px-5 py-3">Kind</th><th className="px-5 py-3">Amount</th><th className="px-5 py-3">Wallet</th><th className="px-5 py-3">Status</th><th className="px-5 py-3"></th></tr>
         </thead>
         <tbody className="divide-y divide-border/60">
-          {(data ?? []).map((w: {
+          {(data as any ?? []).map((w: {
             id: string; created_at: string; kind: string; amount: number; wallet_address: string; status: string;
             profiles: { username: string };
           }) => (
@@ -209,7 +209,7 @@ function Locks() {
           <tr><th className="px-5 py-3">User</th><th className="px-5 py-3">Amount</th><th className="px-5 py-3">Unlock At</th><th className="px-5 py-3">Status</th><th className="px-5 py-3"></th></tr>
         </thead>
         <tbody className="divide-y divide-border/60">
-          {(data ?? []).map((l: {
+          {(data as any ?? []).map((l: {
             investment_id: string; user_id: string; unlock_at: string; unlocked_at: string | null;
             investments: { amount: number }; profiles: { username: string } | null;
           }) => {

@@ -5,14 +5,14 @@ import { z } from "zod";
 const AddressSchema = z.string().regex(/^0x[0-9a-fA-F]{40}$/, "Invalid wallet address");
 
 export const requestWalletNonce = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => z.object({ address: AddressSchema }).parse(d))
+  .validator((d: unknown) => z.object({ address: AddressSchema }).parse(d))
   .handler(async ({ data }) => {
     const { createNonce } = await import("./wallet-auth.server");
     return createNonce(data.address);
   });
 
 export const verifyWalletAndLogin = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z.object({ address: AddressSchema, signature: z.string().min(10) }).parse(d),
   )
   .handler(async ({ data }) => {
@@ -33,7 +33,7 @@ export const verifyWalletAndLogin = createServerFn({ method: "POST" })
   });
 
 export const registerWallet = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         address: AddressSchema,

@@ -22,7 +22,7 @@ export const getMyProfile = createServerFn({ method: "GET" })
 
 export const updateMyProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         username: z.string().min(2).max(40).optional(),
@@ -50,7 +50,7 @@ export const getMyStats = createServerFn({ method: "GET" })
 
 export const getMyActivities = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z.object({ limit: z.number().min(1).max(200).default(30), kinds: z.array(z.string()).optional() }).parse(d ?? {}),
   )
   .handler(async ({ data, context }) => {
@@ -91,7 +91,7 @@ export const getMyCapitalLocks = createServerFn({ method: "GET" })
 
 export const getTeamAtLevel = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ level: z.number().int().min(1).max(10) }).parse(d))
+  .validator((d: unknown) => z.object({ level: z.number().int().min(1).max(10) }).parse(d))
   .handler(async ({ data, context }) => {
     const { data: rows, error } = await context.supabase.rpc("get_team_by_level", {
       _user_id: context.userId,
@@ -117,7 +117,7 @@ export const getSettings = createServerFn({ method: "GET" }).handler(async () =>
 
 export const activatePackageFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ amount: z.number() }).parse(d))
+  .validator((d: unknown) => z.object({ amount: z.number() }).parse(d))
   .handler(async ({ data, context }) => {
     const { activatePackage } = await import("./mws-engine.server");
     return activatePackage(context.userId, data.amount);
@@ -139,7 +139,7 @@ export const claimStatusFn = createServerFn({ method: "GET" })
 
 export const requestWithdrawalFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         kind: z.enum(["income", "capital"]),
@@ -180,7 +180,7 @@ export const getMyNotifications = createServerFn({ method: "GET" })
 
 export const markNotificationRead = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await context.supabase
       .from("notifications")

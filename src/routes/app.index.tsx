@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
+import { QRCodeSVG } from "qrcode.react";
 import {
   ArrowUpRight, Wallet, Users, TrendingUp, Coins, Trophy, Clock,
-  ArrowDownRight, Package, Bot, Sparkles, Copy, Check, Link2,
+  ArrowDownRight, Package, Bot, Sparkles, Copy, Check, Link2, QrCode, Download, X,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -162,6 +163,7 @@ function Chip({ label, value }: { label: string; value: string }) {
 
 function ReferralCard({ code }: { code: string }) {
   const [copied, setCopied] = useState<"code" | "link" | null>(null);
+  const [qrOpen, setQrOpen] = useState(false);
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const link = `${origin}/auth?ref=${code}`;
   const copy = async (value: string, which: "code" | "link") => {
@@ -173,6 +175,29 @@ function ReferralCard({ code }: { code: string }) {
     } catch {
       toast.error("Copy failed");
     }
+  };
+  const downloadQr = () => {
+    const svg = document.getElementById("mws-referral-qr") as SVGSVGElement | null;
+    if (!svg) return;
+    const src = new XMLSerializer().serializeToString(svg);
+    const img = new Image();
+    const svgBlob = new Blob([src], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(svgBlob);
+    img.onload = () => {
+      const size = 720;
+      const canvas = document.createElement("canvas");
+      canvas.width = size; canvas.height = size;
+      const ctx = canvas.getContext("2d")!;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, size, size);
+      ctx.drawImage(img, 0, 0, size, size);
+      URL.revokeObjectURL(url);
+      const a = document.createElement("a");
+      a.href = canvas.toDataURL("image/png");
+      a.download = `mws-referral-${code}.png`;
+      a.click();
+    };
+    img.src = url;
   };
   return (
     <section className="glass-strong relative overflow-hidden rounded-3xl p-6">
@@ -187,7 +212,7 @@ function ReferralCard({ code }: { code: string }) {
             <div className="font-display text-lg font-semibold">Invite &amp; earn commissions</div>
           </div>
         </div>
-        <div className="grid gap-2 sm:grid-cols-[auto_1fr] lg:flex lg:items-center lg:gap-3">
+        <div className="grid gap-2 sm:grid-cols-2 lg:flex lg:items-center lg:gap-3">
           <button
             onClick={() => copy(code, "code")}
             className="glass inline-flex items-center justify-between gap-3 rounded-2xl px-4 py-2.5 font-mono text-sm hover:bg-white/10"
@@ -195,6 +220,14 @@ function ReferralCard({ code }: { code: string }) {
             <span className="text-muted-foreground text-[11px] uppercase tracking-widest">Code</span>
             <span className="font-semibold tracking-wider">{code}</span>
             {copied === "code" ? <Check className="h-4 w-4 text-[oklch(0.87_0.22_145)]" /> : <Copy className="h-4 w-4" />}
+          </button>
+          <button
+            onClick={() => setQrOpen(true)}
+            aria-label="Show QR code for referral link"
+            className="glass inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium hover:bg-white/10"
+          >
+            <QrCode className="h-4 w-4" />
+            QR code
           </button>
           <button
             onClick={() => copy(link, "link")}
@@ -208,9 +241,60 @@ function ReferralCard({ code }: { code: string }) {
       <div className="relative mt-4 truncate rounded-xl border border-border/60 bg-black/30 px-3 py-2 font-mono text-[11px] text-muted-foreground">
         {link}
       </div>
+
+      {qrOpen && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4 backdrop-blur-md"
+          onClick={() => setQrOpen(false)}
+        >
+          <div
+            className="glass-strong relative w-full max-w-sm rounded-3xl p-6 text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setQrOpen(false)}
+              className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-full bg-white/5 hover:bg-white/10"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <div className="text-xs uppercase tracking-widest text-muted-foreground">Scan to join</div>
+            <div className="mt-1 font-display text-lg font-semibold">Sponsor {code}</div>
+            <div className="mx-auto mt-5 w-fit rounded-2xl bg-white p-4">
+              <QRCodeSVG
+                id="mws-referral-qr"
+                value={link}
+                size={224}
+                level="M"
+                marginSize={0}
+              />
+            </div>
+            <div className="mt-4 break-all rounded-xl border border-border/60 bg-black/30 px-3 py-2 font-mono text-[11px] text-muted-foreground">
+              {link}
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <button
+                onClick={() => copy(link, "link")}
+                className="glass inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium hover:bg-white/10"
+              >
+                {copied === "link" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                Copy link
+              </button>
+              <button
+                onClick={downloadQr}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold text-primary-foreground [background:var(--gradient-primary)] glow"
+              >
+                <Download className="h-4 w-4" />
+                Download
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
+
 
 
 

@@ -6,7 +6,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Logo } from "@/components/mws/logo";
 import { BgFx } from "@/components/mws/bg-fx";
 import { supabase } from "@/integrations/supabase/client";
-import { connectAndSign, type WalletId } from "@/lib/wallet-client";
+import type { WalletId } from "@/lib/wallet-client";
 import {
   registerWallet,
   requestWalletNonce,

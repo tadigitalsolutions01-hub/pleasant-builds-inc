@@ -145,6 +145,8 @@ function Dashboard() {
           </div>
         </div>
       </section>
+
+      <TransactionsCard />
     </div>
   );
 }

@@ -89,14 +89,6 @@ function AuthPage() {
     setSelected(w);
     setStep("connecting");
     try {
-      const nonceRes = await nonceFn({ data: { address: "0x0000000000000000000000000000000000000000" } })
-        .catch(() => null); // preflight ignored — real nonce below
-      void nonceRes;
-
-      // 1. Ask wallet for a temporary address so we can request the real nonce
-      // We do this by calling connectAndSign with a placeholder — but personal_sign requires the account.
-      // Simpler: call eth_requestAccounts first via connectAndSign after we know the nonce.
-      // So: get address without signing first.
       const provider = (await import("@/lib/wallet-client")).pickProvider(w);
       if (!provider) throw new Error(`${w} not detected. Install it or use its in-app browser.`);
       if (w === "WalletConnect")

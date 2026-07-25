@@ -99,7 +99,7 @@ function AuthPage() {
         await afterSession(result.tokenHash);
       }
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Connection failed";
+      const msg = friendlyAuthError(e);
       setError(msg);
       toast.error(msg);
       setStep("connect");

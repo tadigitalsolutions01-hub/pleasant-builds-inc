@@ -34,6 +34,28 @@ const WALLETS: { name: WalletId; icon: string; hint: string }[] = [
 
 type Step = "connect" | "connecting" | "register";
 
+function friendlyAuthError(e: unknown): string {
+  const raw = e instanceof Error ? e.message : typeof e === "string" ? e : "";
+  if (!raw) return "Something went wrong. Please try again.";
+  // Wallet-level user rejection (EIP-1193 code 4001) surfaces various strings
+  if (/user rejected|user denied|rejected the request|action_rejected|4001/i.test(raw)) {
+    return "Signature request was rejected in your wallet. Approve the message to continue.";
+  }
+  if (raw.startsWith("NONCE_EXPIRED:")) {
+    return raw.replace(/^NONCE_EXPIRED:\s*/, "");
+  }
+  if (raw.startsWith("NONCE_MISMATCH:")) {
+    return raw.replace(/^NONCE_MISMATCH:\s*/, "");
+  }
+  if (raw.startsWith("WALLET_MISMATCH:")) {
+    return raw.replace(/^WALLET_MISMATCH:\s*/, "");
+  }
+  if (/signature/i.test(raw) && /verif/i.test(raw)) {
+    return "We couldn't verify your signature against the login challenge. Reconnect your wallet and sign the fresh message.";
+  }
+  return raw;
+}
+
 function AuthPage() {
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>("connect");

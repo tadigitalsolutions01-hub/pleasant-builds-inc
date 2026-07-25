@@ -47,13 +47,20 @@ export const adminListPendingWithdrawals = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     await assertAdmin(context.userId, context.supabase);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data } = await supabaseAdmin
+    const { data: wds } = await supabaseAdmin
       .from("withdrawals")
-      .select("id, user_id, kind, amount, wallet_address, status, created_at, profiles:profiles!inner(username, wallet_address)")
+      .select("id, user_id, kind, amount, wallet_address, status, created_at")
       .order("created_at", { ascending: false })
       .limit(200);
-    return data ?? [];
+    const rows = wds ?? [];
+    const ids = Array.from(new Set(rows.map((w) => w.user_id)));
+    const { data: profs } = ids.length
+      ? await supabaseAdmin.from("profiles").select("id, username, wallet_address").in("id", ids)
+      : { data: [] as { id: string; username: string; wallet_address: string }[] };
+    const map = new Map((profs ?? []).map((p) => [p.id, p]));
+    return rows.map((w) => ({ ...w, profiles: map.get(w.user_id) ?? { username: "—", wallet_address: w.wallet_address } }));
   });
+
 
 export const adminReviewWithdrawal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -135,13 +142,20 @@ export const adminListDeposits = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     await assertAdmin(context.userId, context.supabase);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data } = await supabaseAdmin
+    const { data: deps } = await supabaseAdmin
       .from("deposits")
-      .select("id, user_id, package_amount, amount, tx_hash, status, block_number, from_address, note, created_at, verified_at, profiles:profiles!inner(username, wallet_address)")
+      .select("id, user_id, package_amount, amount, tx_hash, status, block_number, from_address, note, created_at, verified_at")
       .order("created_at", { ascending: false })
       .limit(200);
-    return data ?? [];
+    const rows = deps ?? [];
+    const ids = Array.from(new Set(rows.map((d) => d.user_id)));
+    const { data: profs } = ids.length
+      ? await supabaseAdmin.from("profiles").select("id, username, wallet_address").in("id", ids)
+      : { data: [] as { id: string; username: string; wallet_address: string }[] };
+    const map = new Map((profs ?? []).map((p) => [p.id, p]));
+    return rows.map((d) => ({ ...d, profiles: map.get(d.user_id) ?? { username: "—", wallet_address: "" } }));
   });
+
 
 export const adminRunSalary = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

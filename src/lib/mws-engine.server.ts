@@ -21,7 +21,7 @@ async function getSettings(): Promise<Settings> {
 }
 
 async function notify(userId: string, type: string, title: string, body?: string) {
-  await supabaseAdmin.from("notifications").insert({ user_id: userId, type, title, body });
+  await supabaseAdmin.from("notifications").insert({ user_id: userId, type, title, body } as never);
 }
 
 async function getSponsorChain(userId: string, depth: number) {
@@ -57,7 +57,7 @@ export async function activatePackage(userId: string, amount: number) {
 
   const { data: inv, error: invErr } = await supabaseAdmin
     .from("investments")
-    .insert({ user_id: userId, amount, cap_amount: capAmount })
+    .insert({ user_id: userId, amount, cap_amount: capAmount } as never)
     .select("id")
     .single();
   if (invErr) throw new Error(invErr.message);
@@ -67,12 +67,12 @@ export async function activatePackage(userId: string, amount: number) {
     investment_id: inv.id,
     user_id: userId,
     unlock_at: unlockAt,
-  });
+  } as never);
 
   await supabaseAdmin.from("ledger_entries").insert([
     { user_id: userId, kind: "deposit", amount, ref_investment_id: inv.id, meta: { note: "Package deposit" } },
     { user_id: userId, kind: "package_activation", amount: 0, ref_investment_id: inv.id, meta: { activated: amount } },
-  ]);
+  ] as never);
 
   await notify(userId, "package_activated", `Package $${amount} activated`, "AI robot is processing your investment.");
 
@@ -94,7 +94,7 @@ export async function activatePackage(userId: string, amount: number) {
       ref_investment_id: inv.id,
       ref_user_id: userId,
       meta: { level: i + 1, source_amount: amount },
-    });
+    } as never);
     await notify(
       sponsorId,
       "commission",
@@ -180,7 +180,7 @@ export async function claimDaily(userId: string) {
 
   if (!ledgerRows.length) throw new Error("All investments have reached their 2× limit.");
 
-  await supabaseAdmin.from("ledger_entries").insert(ledgerRows);
+  await supabaseAdmin.from("ledger_entries").insert(ledgerRows as never);
   await supabaseAdmin
     .from("claim_state")
     .upsert({ user_id: userId, last_claim_at: new Date(baseline + cycles * intervalMs).toISOString() });
@@ -248,14 +248,14 @@ export async function requestWithdrawal(
       kind: "income",
       amount: input.amount,
       wallet_address: input.wallet.toLowerCase(),
-    });
+    } as never);
     if (error) throw new Error(error.message);
     await supabaseAdmin.from("ledger_entries").insert({
       user_id: userId,
       kind: "withdrawal_hold",
       amount: input.amount,
       meta: { wallet: input.wallet.toLowerCase() },
-    });
+    } as never);
     await notify(userId, "withdrawal", `Withdrawal request submitted`, `$${input.amount.toFixed(2)} pending admin approval.`);
     return { ok: true };
   }
@@ -279,7 +279,7 @@ export async function requestWithdrawal(
     kind: "capital",
     amount: input.amount,
     wallet_address: input.wallet.toLowerCase(),
-  });
+  } as never);
   if (error) throw new Error(error.message);
   await notify(userId, "withdrawal", `Capital withdrawal request submitted`, `$${input.amount.toFixed(2)} pending admin approval.`);
   return { ok: true };
@@ -310,7 +310,7 @@ export async function reviewWithdrawal(
         kind: "withdrawal_refund",
         amount: Number(wd.amount),
         meta: { withdrawal_id: wd.id },
-      });
+      } as never);
     }
   } else if (wd.kind === "capital" && input.action === "approve") {
     await supabaseAdmin.from("ledger_entries").insert({
@@ -318,7 +318,7 @@ export async function reviewWithdrawal(
       kind: "capital_withdrawal",
       amount: Number(wd.amount),
       meta: { withdrawal_id: wd.id },
-    });
+    } as never);
   }
 
   await notify(
@@ -406,14 +406,14 @@ export async function runWeeklySalary() {
       level: bestLevel.level,
       week_start: weekStart,
       amount: bestLevel.weekly_amount,
-    });
+    } as never);
     if (payErr) continue; // duplicate for the week
     await supabaseAdmin.from("ledger_entries").insert({
       user_id: u.id,
       kind: "salary",
       amount: Number(bestLevel.weekly_amount),
       meta: { level: bestLevel.level, week_start: weekStart },
-    });
+    } as never);
     await notify(
       u.id,
       "salary",

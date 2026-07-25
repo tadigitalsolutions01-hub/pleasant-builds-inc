@@ -30,7 +30,7 @@ export async function createNonce(address: string) {
   const expires = new Date(Date.now() + NONCE_TTL_MINUTES * 60_000).toISOString();
   const { error } = await supabaseAdmin
     .from("auth_nonces")
-    .insert({ wallet_address: wallet, nonce, expires_at: expires });
+    .insert({ wallet_address: wallet, nonce, expires_at: expires } as never);
   if (error) throw new Error(error.message);
   return { nonce, message: loginMessage(nonce) };
 }
@@ -148,7 +148,7 @@ export async function registerNewWallet(params: {
     username,
     sponsor_id: sponsorId,
     sponsor_code: sponsorCode,
-  });
+  } as never);
   if (pErr) {
     await supabaseAdmin.auth.admin.deleteUser(userId).catch(() => {});
     throw new Error(pErr.message);
@@ -159,9 +159,9 @@ export async function registerNewWallet(params: {
     .from("user_roles")
     .select("id", { count: "exact", head: true });
   if ((roleCount ?? 0) === 0) {
-    await supabaseAdmin.from("user_roles").insert({ user_id: userId, role: "admin" });
+    await supabaseAdmin.from("user_roles").insert({ user_id: userId, role: "admin" } as never);
   } else {
-    await supabaseAdmin.from("user_roles").insert({ user_id: userId, role: "user" });
+    await supabaseAdmin.from("user_roles").insert({ user_id: userId, role: "user" } as never);
   }
 
   await supabaseAdmin.from("notifications").insert({
@@ -169,7 +169,7 @@ export async function registerNewWallet(params: {
     type: "welcome",
     title: "Account successfully created",
     body: "Welcome to Meta Word Space. Your grid identity is online.",
-  });
+  } as never);
 
   return { userId, email, username, sponsorCode };
 }

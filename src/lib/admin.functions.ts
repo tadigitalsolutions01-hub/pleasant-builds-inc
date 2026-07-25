@@ -135,6 +135,6 @@ export const adminBroadcast = createServerFn({ method: "POST" })
       type: "announcement",
       title: data.title,
       body: data.body,
-    });
+    } as never);
     return { ok: true };
   });

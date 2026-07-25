@@ -189,3 +189,31 @@ export const markNotificationRead = createServerFn({ method: "POST" })
       .eq("user_id", context.userId);
     return { ok: true };
   });
+
+export const submitDepositFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) =>
+    z
+      .object({
+        txHash: z.string().regex(/^0x[0-9a-fA-F]{64}$/, "Invalid transaction hash"),
+        packageAmount: z.number().positive(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { submitOnChainDeposit } = await import("./deposits.server");
+    return submitOnChainDeposit(context.userId, data);
+  });
+
+export const getMyDeposits = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("deposits")
+      .select("id, package_amount, amount, tx_hash, status, block_number, note, created_at, verified_at")
+      .eq("user_id", context.userId)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });

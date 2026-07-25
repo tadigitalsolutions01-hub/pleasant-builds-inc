@@ -100,18 +100,47 @@ export const adminUpdateSettings = createServerFn({ method: "POST" })
         min_directs_for_all_levels: z.number().int().min(0).max(50).optional(),
         maintenance_mode: z.boolean().optional(),
         announcement: z.string().max(2000).optional(),
+        demo_deposit_mode: z.boolean().optional(),
+        deposit_wallet_address: z
+          .string()
+          .regex(/^0x[0-9a-fA-F]{40}$/, "Invalid BEP20 wallet")
+          .or(z.literal(""))
+          .optional(),
+        deposit_min_confirmations: z.number().int().min(1).max(50).optional(),
+        deposit_token_contract: z
+          .string()
+          .regex(/^0x[0-9a-fA-F]{40}$/, "Invalid contract address")
+          .optional(),
       })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId, context.supabase);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin
-      .from("system_settings")
-      .update({ ...data, updated_at: new Date().toISOString() })
-      .eq("id", 1);
+    const patch: Record<string, unknown> = { ...data, updated_at: new Date().toISOString() };
+    if (patch.deposit_wallet_address === "") patch.deposit_wallet_address = null;
+    if (typeof patch.deposit_wallet_address === "string") {
+      patch.deposit_wallet_address = (patch.deposit_wallet_address as string).toLowerCase();
+    }
+    if (typeof patch.deposit_token_contract === "string") {
+      patch.deposit_token_contract = (patch.deposit_token_contract as string).toLowerCase();
+    }
+    const { error } = await supabaseAdmin.from("system_settings").update(patch as never).eq("id", 1);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+export const adminListDeposits = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId, context.supabase);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin
+      .from("deposits")
+      .select("id, user_id, package_amount, amount, tx_hash, status, block_number, from_address, note, created_at, verified_at, profiles:profiles!inner(username, wallet_address)")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    return data ?? [];
   });
 
 export const adminRunSalary = createServerFn({ method: "POST" })

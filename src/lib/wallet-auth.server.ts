@@ -50,12 +50,18 @@ export async function consumeAndVerifySignature(
     .order("created_at", { ascending: false })
     .limit(5);
   if (error) throw new Error(error.message);
-  if (!rows?.length) throw new Error("Nonce expired or missing. Please request a new signature.");
+  if (!rows?.length) {
+    throw new Error(
+      "NONCE_EXPIRED: Your login challenge expired or was never issued. Please reconnect your wallet to request a fresh signature.",
+    );
+  }
 
   let matched: string | null = null;
+  let recoveredAddress: string | null = null;
   for (const r of rows) {
     try {
       const recovered = verifyMessage(loginMessage(r.nonce), signature);
+      recoveredAddress = recovered;
       if (recovered.toLowerCase() === wallet) {
         matched = r.nonce;
         break;
@@ -64,7 +70,16 @@ export async function consumeAndVerifySignature(
       // continue
     }
   }
-  if (!matched) throw new Error("Signature verification failed.");
+  if (!matched) {
+    if (recoveredAddress && recoveredAddress.toLowerCase() !== wallet) {
+      throw new Error(
+        `WALLET_MISMATCH: Signature was produced by ${recoveredAddress.slice(0, 6)}…${recoveredAddress.slice(-4)}, not by the connected wallet ${wallet.slice(0, 6)}…${wallet.slice(-4)}. Switch to the matching account in your wallet and try again.`,
+      );
+    }
+    throw new Error(
+      "NONCE_MISMATCH: The signed message doesn't match the login challenge we issued. The nonce may have expired between signing and submission — please reconnect and sign the new message.",
+    );
+  }
 
   if (opts.consume !== false) {
     await supabaseAdmin.from("auth_nonces").delete().eq("wallet_address", wallet).eq("nonce", matched);

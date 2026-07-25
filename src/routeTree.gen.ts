@@ -17,6 +17,7 @@ import { Route as AppProfileRouteImport } from './routes/app.profile'
 import { Route as AppPackagesRouteImport } from './routes/app.packages'
 import { Route as AppAiRobotRouteImport } from './routes/app.ai-robot'
 import { Route as AppWithdrawalIncomeRouteImport } from './routes/app.withdrawal.income'
+import { Route as AppWithdrawalCapitalRouteImport } from './routes/app.withdrawal.capital'
 import { Route as AppTeamLevel3RouteImport } from './routes/app.team.level-3'
 import { Route as AppTeamLevel2RouteImport } from './routes/app.team.level-2'
 import { Route as AppTeamLevel1RouteImport } from './routes/app.team.level-1'
@@ -63,6 +64,11 @@ const AppAiRobotRoute = AppAiRobotRouteImport.update({
 const AppWithdrawalIncomeRoute = AppWithdrawalIncomeRouteImport.update({
   id: '/withdrawal/income',
   path: '/withdrawal/income',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppWithdrawalCapitalRoute = AppWithdrawalCapitalRouteImport.update({
+  id: '/withdrawal/capital',
+  path: '/withdrawal/capital',
   getParentRoute: () => AppRoute,
 } as any)
 const AppTeamLevel3Route = AppTeamLevel3RouteImport.update({
@@ -116,6 +122,7 @@ export interface FileRoutesByFullPath {
   '/app/team/level-1': typeof AppTeamLevel1Route
   '/app/team/level-2': typeof AppTeamLevel2Route
   '/app/team/level-3': typeof AppTeamLevel3Route
+  '/app/withdrawal/capital': typeof AppWithdrawalCapitalRoute
   '/app/withdrawal/income': typeof AppWithdrawalIncomeRoute
 }
 export interface FileRoutesByTo {
@@ -132,6 +139,7 @@ export interface FileRoutesByTo {
   '/app/team/level-1': typeof AppTeamLevel1Route
   '/app/team/level-2': typeof AppTeamLevel2Route
   '/app/team/level-3': typeof AppTeamLevel3Route
+  '/app/withdrawal/capital': typeof AppWithdrawalCapitalRoute
   '/app/withdrawal/income': typeof AppWithdrawalIncomeRoute
 }
 export interface FileRoutesById {
@@ -150,6 +158,7 @@ export interface FileRoutesById {
   '/app/team/level-1': typeof AppTeamLevel1Route
   '/app/team/level-2': typeof AppTeamLevel2Route
   '/app/team/level-3': typeof AppTeamLevel3Route
+  '/app/withdrawal/capital': typeof AppWithdrawalCapitalRoute
   '/app/withdrawal/income': typeof AppWithdrawalIncomeRoute
 }
 export interface FileRouteTypes {
@@ -169,6 +178,7 @@ export interface FileRouteTypes {
     | '/app/team/level-1'
     | '/app/team/level-2'
     | '/app/team/level-3'
+    | '/app/withdrawal/capital'
     | '/app/withdrawal/income'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -185,6 +195,7 @@ export interface FileRouteTypes {
     | '/app/team/level-1'
     | '/app/team/level-2'
     | '/app/team/level-3'
+    | '/app/withdrawal/capital'
     | '/app/withdrawal/income'
   id:
     | '__root__'
@@ -202,6 +213,7 @@ export interface FileRouteTypes {
     | '/app/team/level-1'
     | '/app/team/level-2'
     | '/app/team/level-3'
+    | '/app/withdrawal/capital'
     | '/app/withdrawal/income'
   fileRoutesById: FileRoutesById
 }
@@ -269,6 +281,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppWithdrawalIncomeRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/withdrawal/capital': {
+      id: '/app/withdrawal/capital'
+      path: '/withdrawal/capital'
+      fullPath: '/app/withdrawal/capital'
+      preLoaderRoute: typeof AppWithdrawalCapitalRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/team/level-3': {
       id: '/app/team/level-3'
       path: '/team/level-3'
@@ -333,6 +352,7 @@ interface AppRouteChildren {
   AppTeamLevel1Route: typeof AppTeamLevel1Route
   AppTeamLevel2Route: typeof AppTeamLevel2Route
   AppTeamLevel3Route: typeof AppTeamLevel3Route
+  AppWithdrawalCapitalRoute: typeof AppWithdrawalCapitalRoute
   AppWithdrawalIncomeRoute: typeof AppWithdrawalIncomeRoute
 }
 
@@ -348,6 +368,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppTeamLevel1Route: AppTeamLevel1Route,
   AppTeamLevel2Route: AppTeamLevel2Route,
   AppTeamLevel3Route: AppTeamLevel3Route,
+  AppWithdrawalCapitalRoute: AppWithdrawalCapitalRoute,
   AppWithdrawalIncomeRoute: AppWithdrawalIncomeRoute,
 }
 
@@ -361,3 +382,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

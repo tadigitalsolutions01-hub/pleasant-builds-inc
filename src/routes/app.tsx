@@ -151,12 +151,7 @@ function AppLayout() {
                   <div className="truncate font-mono text-[10px] text-muted-foreground">{shortWallet}</div>
                 </div>
                 <button
-                  onClick={async () => {
-                    await qc.cancelQueries();
-                    qc.clear();
-                    await supabase.auth.signOut();
-                    navigate({ to: "/auth", replace: true });
-                  }}
+                  onClick={handleSignOut}
                   className="text-muted-foreground hover:text-foreground"
                 >
                   <LogOut className="h-4 w-4" />

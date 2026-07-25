@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
+import { QRCodeSVG } from "qrcode.react";
 import {
   ArrowUpRight, Wallet, Users, TrendingUp, Coins, Trophy, Clock,
-  ArrowDownRight, Package, Bot, Sparkles, Copy, Check, Link2,
+  ArrowDownRight, Package, Bot, Sparkles, Copy, Check, Link2, QrCode, Download, X,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";

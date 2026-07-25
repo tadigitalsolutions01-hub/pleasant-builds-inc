@@ -160,6 +160,57 @@ function Chip({ label, value }: { label: string; value: string }) {
   );
 }
 
+function ReferralCard({ code }: { code: string }) {
+  const [copied, setCopied] = useState<"code" | "link" | null>(null);
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const link = `${origin}/auth?ref=${code}`;
+  const copy = async (value: string, which: "code" | "link") => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(which);
+      toast.success(which === "code" ? "Sponsor code copied" : "Referral link copied");
+      setTimeout(() => setCopied(null), 1600);
+    } catch {
+      toast.error("Copy failed");
+    }
+  };
+  return (
+    <section className="glass-strong relative overflow-hidden rounded-3xl p-6">
+      <div className="absolute -left-16 -bottom-16 h-56 w-56 rounded-full opacity-25 blur-3xl [background:var(--gradient-primary)]" />
+      <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="grid h-11 w-11 place-items-center rounded-2xl [background:var(--gradient-primary)] text-primary-foreground">
+            <Link2 className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="text-xs uppercase tracking-widest text-muted-foreground">Your Referral</div>
+            <div className="font-display text-lg font-semibold">Invite &amp; earn commissions</div>
+          </div>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-[auto_1fr] lg:flex lg:items-center lg:gap-3">
+          <button
+            onClick={() => copy(code, "code")}
+            className="glass inline-flex items-center justify-between gap-3 rounded-2xl px-4 py-2.5 font-mono text-sm hover:bg-white/10"
+          >
+            <span className="text-muted-foreground text-[11px] uppercase tracking-widest">Code</span>
+            <span className="font-semibold tracking-wider">{code}</span>
+            {copied === "code" ? <Check className="h-4 w-4 text-[oklch(0.87_0.22_145)]" /> : <Copy className="h-4 w-4" />}
+          </button>
+          <button
+            onClick={() => copy(link, "link")}
+            className="inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold text-primary-foreground [background:var(--gradient-primary)] glow"
+          >
+            {copied === "link" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            Copy referral link
+          </button>
+        </div>
+      </div>
+      <div className="relative mt-4 truncate rounded-xl border border-border/60 bg-black/30 px-3 py-2 font-mono text-[11px] text-muted-foreground">
+        {link}
+      </div>
+    </section>
+  );
+
 function StatCard({ label, value, icon: Icon, tone }: { label: string; value: string; icon: React.ComponentType<{ className?: string }>; tone: "cyan" | "violet" | "pink" | "lime" }) {
   const toneColor = { cyan: "oklch(0.85 0.19 210)", violet: "oklch(0.7 0.24 295)", pink: "oklch(0.72 0.25 340)", lime: "oklch(0.87 0.22 145)" }[tone];
   return (

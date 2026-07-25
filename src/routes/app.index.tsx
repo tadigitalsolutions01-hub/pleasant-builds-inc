@@ -1,7 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { toast } from "sonner";
 import {
   ArrowUpRight, Wallet, Users, TrendingUp, Coins, Trophy, Clock,
-  ArrowDownRight, Package, Bot, Sparkles,
+  ArrowDownRight, Package, Bot, Sparkles, Copy, Check, Link2,
+} from "lucide-react";
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";

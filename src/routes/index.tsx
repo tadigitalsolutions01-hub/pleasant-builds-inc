@@ -28,7 +28,7 @@ function Landing() {
           <span className="font-mono text-xs tracking-widest">v2.0.24 · MAINNET</span>
         </nav>
         <Link
-          to="/login"
+          to="/auth"
           className="group inline-flex items-center gap-2 rounded-full border border-border/70 bg-white/5 px-4 py-2 text-sm font-medium backdrop-blur transition hover:bg-white/10"
         >
           <Wallet className="h-4 w-4" /> Connect
@@ -53,7 +53,7 @@ function Landing() {
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Link
-              to="/login"
+              to="/auth"
               className="group relative inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-primary-foreground [background:var(--gradient-primary)] glow transition hover:scale-[1.02]"
             >
               Start Now
@@ -66,9 +66,9 @@ function Landing() {
 
           <div className="mt-12 grid grid-cols-3 gap-4">
             {[
-              { k: "$4.2M+", v: "AI Volume" },
-              { k: "18k", v: "Grid Members" },
-              { k: "1.5%", v: "Daily Yield" },
+              { k: "Wallet", v: "Only sign-in" },
+              { k: "24h", v: "Claim Cycle" },
+              { k: "2×", v: "Return Cap" },
             ].map((s) => (
               <div key={s.v} className="glass rounded-2xl p-4">
                 <div className="gradient-text font-display text-2xl font-bold">{s.k}</div>
@@ -95,10 +95,10 @@ function Landing() {
                 </span>
                 <div>
                   <div className="text-xs text-muted-foreground">AI-01 · Neural Trader</div>
-                  <div className="font-mono text-sm">Executing cycle #48,214</div>
+                  <div className="font-mono text-sm">Awaiting your first cycle</div>
                 </div>
               </div>
-              <span className="rounded-full bg-[oklch(0.87_0.22_145)/20] px-2 py-1 font-mono text-[10px] text-[oklch(0.87_0.22_145)]">+1.62%</span>
+              <span className="rounded-full bg-[oklch(0.87_0.22_145)/20] px-2 py-1 font-mono text-[10px] text-[oklch(0.87_0.22_145)]">ONLINE</span>
             </div>
           </div>
 
@@ -116,7 +116,7 @@ function Landing() {
         <div className="mx-auto max-w-7xl overflow-hidden">
           <div className="flex w-[200%] animate-ticker items-center gap-12 font-mono text-xs uppercase text-muted-foreground">
             {Array.from({ length: 2 }).flatMap((_, i) =>
-              ["BTC $68,240 +1.2%", "ETH $3,890 +0.8%", "MWS AI Cycle 48,214", "SOL $184 +2.4%", "TVL $4.2M", "Passive 1.5%/day", "Salary Pool $214k"].map((t) => (
+              ["Wallet-only sign-in", "AI robot 24h cycle", "3-level referral grid", "Weekly salary tiers", "Capital lock 6 months", "2× return cap", "Non-custodial"].map((t) => (
                 <span key={t + i} className="flex items-center gap-3">
                   <span className="h-1.5 w-1.5 rounded-full [background:var(--gradient-primary)]" /> {t}
                 </span>

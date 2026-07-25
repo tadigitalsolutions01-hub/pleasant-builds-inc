@@ -35,7 +35,11 @@ export async function createNonce(address: string) {
   return { nonce, message: loginMessage(nonce) };
 }
 
-export async function consumeAndVerifySignature(address: string, signature: string) {
+export async function consumeAndVerifySignature(
+  address: string,
+  signature: string,
+  opts: { consume?: boolean } = { consume: true },
+) {
   const wallet = address.toLowerCase();
   // Fetch newest unexpired nonce for this wallet
   const { data: rows, error } = await supabaseAdmin
@@ -62,7 +66,9 @@ export async function consumeAndVerifySignature(address: string, signature: stri
   }
   if (!matched) throw new Error("Signature verification failed.");
 
-  await supabaseAdmin.from("auth_nonces").delete().eq("wallet_address", wallet).eq("nonce", matched);
+  if (opts.consume !== false) {
+    await supabaseAdmin.from("auth_nonces").delete().eq("wallet_address", wallet).eq("nonce", matched);
+  }
   return { wallet };
 }
 

@@ -55,14 +55,13 @@ function AppLayout() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const qc = useQueryClient();
-  const { data: profile, isLoading, hydrated } = useProfile();
+  const { data: profile, isLoading, hydrated, error, refetch, userId } = useProfile();
 
   useEffect(() => {
-    if (hydrated && !isLoading && !profile) {
-      // No session
-      navigate({ to: "/auth" });
+    if (hydrated && !userId) {
+      navigate({ to: "/auth", replace: true });
     }
-  }, [hydrated, isLoading, profile, navigate]);
+  }, [hydrated, userId, navigate]);
 
   // Realtime notifications
   useEffect(() => {
@@ -92,13 +91,24 @@ function AppLayout() {
     };
   }, [profile?.id, qc]);
 
-  if (!hydrated || isLoading || !profile) {
-    return (
-      <div className="grid min-h-screen place-items-center">
-        <BgFx />
-        <div className="font-mono text-sm text-muted-foreground">Booting AI core…</div>
-      </div>
-    );
+  async function handleSignOut() {
+    await qc.cancelQueries();
+    qc.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  }
+
+  if (!hydrated || (userId && (isLoading || (!profile && !error)))) {
+    return <BootOverlay />;
+  }
+
+  if (userId && error) {
+    return <BootOverlay error={error as Error} onRetry={() => refetch()} onSignOut={handleSignOut} />;
+  }
+
+  if (!profile) {
+    // Session gone — the effect above will redirect; render overlay in the meantime.
+    return <BootOverlay />;
   }
 
   const initials = profile.username.slice(-2).toUpperCase();

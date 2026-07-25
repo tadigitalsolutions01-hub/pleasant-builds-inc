@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useProfile, useStats } from "@/hooks/use-profile";
 import { getMyActivities, getMyCapitalLocks } from "@/lib/mws.functions";
+import { TransactionsCard } from "@/components/mws/transactions-card";
 
 export const Route = createFileRoute("/app/")({
   head: () => ({ meta: [{ title: "Dashboard · Meta Word Space" }, { name: "description", content: "Your AI investment dashboard." }] }),

@@ -16,6 +16,14 @@ import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppProfileRouteImport } from './routes/app.profile'
 import { Route as AppPackagesRouteImport } from './routes/app.packages'
 import { Route as AppAiRobotRouteImport } from './routes/app.ai-robot'
+import { Route as AppWithdrawalIncomeRouteImport } from './routes/app.withdrawal.income'
+import { Route as AppTeamLevel3RouteImport } from './routes/app.team.level-3'
+import { Route as AppTeamLevel2RouteImport } from './routes/app.team.level-2'
+import { Route as AppTeamLevel1RouteImport } from './routes/app.team.level-1'
+import { Route as AppTeamDirectRouteImport } from './routes/app.team.direct'
+import { Route as AppHistoryTeamRouteImport } from './routes/app.history.team'
+import { Route as AppHistoryPassiveRouteImport } from './routes/app.history.passive'
+import { Route as AppHistoryDirectRouteImport } from './routes/app.history.direct'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -52,6 +60,46 @@ const AppAiRobotRoute = AppAiRobotRouteImport.update({
   path: '/ai-robot',
   getParentRoute: () => AppRoute,
 } as any)
+const AppWithdrawalIncomeRoute = AppWithdrawalIncomeRouteImport.update({
+  id: '/withdrawal/income',
+  path: '/withdrawal/income',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTeamLevel3Route = AppTeamLevel3RouteImport.update({
+  id: '/team/level-3',
+  path: '/team/level-3',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTeamLevel2Route = AppTeamLevel2RouteImport.update({
+  id: '/team/level-2',
+  path: '/team/level-2',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTeamLevel1Route = AppTeamLevel1RouteImport.update({
+  id: '/team/level-1',
+  path: '/team/level-1',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTeamDirectRoute = AppTeamDirectRouteImport.update({
+  id: '/team/direct',
+  path: '/team/direct',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHistoryTeamRoute = AppHistoryTeamRouteImport.update({
+  id: '/history/team',
+  path: '/history/team',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHistoryPassiveRoute = AppHistoryPassiveRouteImport.update({
+  id: '/history/passive',
+  path: '/history/passive',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHistoryDirectRoute = AppHistoryDirectRouteImport.update({
+  id: '/history/direct',
+  path: '/history/direct',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -61,6 +109,14 @@ export interface FileRoutesByFullPath {
   '/app/packages': typeof AppPackagesRoute
   '/app/profile': typeof AppProfileRoute
   '/app/': typeof AppIndexRoute
+  '/app/history/direct': typeof AppHistoryDirectRoute
+  '/app/history/passive': typeof AppHistoryPassiveRoute
+  '/app/history/team': typeof AppHistoryTeamRoute
+  '/app/team/direct': typeof AppTeamDirectRoute
+  '/app/team/level-1': typeof AppTeamLevel1Route
+  '/app/team/level-2': typeof AppTeamLevel2Route
+  '/app/team/level-3': typeof AppTeamLevel3Route
+  '/app/withdrawal/income': typeof AppWithdrawalIncomeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -69,6 +125,14 @@ export interface FileRoutesByTo {
   '/app/packages': typeof AppPackagesRoute
   '/app/profile': typeof AppProfileRoute
   '/app': typeof AppIndexRoute
+  '/app/history/direct': typeof AppHistoryDirectRoute
+  '/app/history/passive': typeof AppHistoryPassiveRoute
+  '/app/history/team': typeof AppHistoryTeamRoute
+  '/app/team/direct': typeof AppTeamDirectRoute
+  '/app/team/level-1': typeof AppTeamLevel1Route
+  '/app/team/level-2': typeof AppTeamLevel2Route
+  '/app/team/level-3': typeof AppTeamLevel3Route
+  '/app/withdrawal/income': typeof AppWithdrawalIncomeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -79,6 +143,14 @@ export interface FileRoutesById {
   '/app/packages': typeof AppPackagesRoute
   '/app/profile': typeof AppProfileRoute
   '/app/': typeof AppIndexRoute
+  '/app/history/direct': typeof AppHistoryDirectRoute
+  '/app/history/passive': typeof AppHistoryPassiveRoute
+  '/app/history/team': typeof AppHistoryTeamRoute
+  '/app/team/direct': typeof AppTeamDirectRoute
+  '/app/team/level-1': typeof AppTeamLevel1Route
+  '/app/team/level-2': typeof AppTeamLevel2Route
+  '/app/team/level-3': typeof AppTeamLevel3Route
+  '/app/withdrawal/income': typeof AppWithdrawalIncomeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -90,6 +162,14 @@ export interface FileRouteTypes {
     | '/app/packages'
     | '/app/profile'
     | '/app/'
+    | '/app/history/direct'
+    | '/app/history/passive'
+    | '/app/history/team'
+    | '/app/team/direct'
+    | '/app/team/level-1'
+    | '/app/team/level-2'
+    | '/app/team/level-3'
+    | '/app/withdrawal/income'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -98,6 +178,14 @@ export interface FileRouteTypes {
     | '/app/packages'
     | '/app/profile'
     | '/app'
+    | '/app/history/direct'
+    | '/app/history/passive'
+    | '/app/history/team'
+    | '/app/team/direct'
+    | '/app/team/level-1'
+    | '/app/team/level-2'
+    | '/app/team/level-3'
+    | '/app/withdrawal/income'
   id:
     | '__root__'
     | '/'
@@ -107,6 +195,14 @@ export interface FileRouteTypes {
     | '/app/packages'
     | '/app/profile'
     | '/app/'
+    | '/app/history/direct'
+    | '/app/history/passive'
+    | '/app/history/team'
+    | '/app/team/direct'
+    | '/app/team/level-1'
+    | '/app/team/level-2'
+    | '/app/team/level-3'
+    | '/app/withdrawal/income'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -166,6 +262,62 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAiRobotRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/withdrawal/income': {
+      id: '/app/withdrawal/income'
+      path: '/withdrawal/income'
+      fullPath: '/app/withdrawal/income'
+      preLoaderRoute: typeof AppWithdrawalIncomeRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/team/level-3': {
+      id: '/app/team/level-3'
+      path: '/team/level-3'
+      fullPath: '/app/team/level-3'
+      preLoaderRoute: typeof AppTeamLevel3RouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/team/level-2': {
+      id: '/app/team/level-2'
+      path: '/team/level-2'
+      fullPath: '/app/team/level-2'
+      preLoaderRoute: typeof AppTeamLevel2RouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/team/level-1': {
+      id: '/app/team/level-1'
+      path: '/team/level-1'
+      fullPath: '/app/team/level-1'
+      preLoaderRoute: typeof AppTeamLevel1RouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/team/direct': {
+      id: '/app/team/direct'
+      path: '/team/direct'
+      fullPath: '/app/team/direct'
+      preLoaderRoute: typeof AppTeamDirectRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/history/team': {
+      id: '/app/history/team'
+      path: '/history/team'
+      fullPath: '/app/history/team'
+      preLoaderRoute: typeof AppHistoryTeamRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/history/passive': {
+      id: '/app/history/passive'
+      path: '/history/passive'
+      fullPath: '/app/history/passive'
+      preLoaderRoute: typeof AppHistoryPassiveRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/history/direct': {
+      id: '/app/history/direct'
+      path: '/history/direct'
+      fullPath: '/app/history/direct'
+      preLoaderRoute: typeof AppHistoryDirectRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -174,6 +326,14 @@ interface AppRouteChildren {
   AppPackagesRoute: typeof AppPackagesRoute
   AppProfileRoute: typeof AppProfileRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppHistoryDirectRoute: typeof AppHistoryDirectRoute
+  AppHistoryPassiveRoute: typeof AppHistoryPassiveRoute
+  AppHistoryTeamRoute: typeof AppHistoryTeamRoute
+  AppTeamDirectRoute: typeof AppTeamDirectRoute
+  AppTeamLevel1Route: typeof AppTeamLevel1Route
+  AppTeamLevel2Route: typeof AppTeamLevel2Route
+  AppTeamLevel3Route: typeof AppTeamLevel3Route
+  AppWithdrawalIncomeRoute: typeof AppWithdrawalIncomeRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -181,6 +341,14 @@ const AppRouteChildren: AppRouteChildren = {
   AppPackagesRoute: AppPackagesRoute,
   AppProfileRoute: AppProfileRoute,
   AppIndexRoute: AppIndexRoute,
+  AppHistoryDirectRoute: AppHistoryDirectRoute,
+  AppHistoryPassiveRoute: AppHistoryPassiveRoute,
+  AppHistoryTeamRoute: AppHistoryTeamRoute,
+  AppTeamDirectRoute: AppTeamDirectRoute,
+  AppTeamLevel1Route: AppTeamLevel1Route,
+  AppTeamLevel2Route: AppTeamLevel2Route,
+  AppTeamLevel3Route: AppTeamLevel3Route,
+  AppWithdrawalIncomeRoute: AppWithdrawalIncomeRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

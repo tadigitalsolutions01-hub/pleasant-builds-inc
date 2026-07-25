@@ -125,7 +125,7 @@ export const adminUpdateSettings = createServerFn({ method: "POST" })
     if (typeof patch.deposit_token_contract === "string") {
       patch.deposit_token_contract = (patch.deposit_token_contract as string).toLowerCase();
     }
-    const { error } = await supabaseAdmin.from("system_settings").update(patch).eq("id", 1);
+    const { error } = await supabaseAdmin.from("system_settings").update(patch as never).eq("id", 1);
     if (error) throw new Error(error.message);
     return { ok: true };
   });

@@ -82,6 +82,62 @@ export type Database = {
         }
         Relationships: []
       }
+      deposits: {
+        Row: {
+          amount: number
+          block_number: number | null
+          created_at: string
+          from_address: string | null
+          id: string
+          investment_id: string | null
+          note: string | null
+          package_amount: number
+          status: string
+          to_address: string | null
+          tx_hash: string
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          amount: number
+          block_number?: number | null
+          created_at?: string
+          from_address?: string | null
+          id?: string
+          investment_id?: string | null
+          note?: string | null
+          package_amount: number
+          status?: string
+          to_address?: string | null
+          tx_hash: string
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          amount?: number
+          block_number?: number | null
+          created_at?: string
+          from_address?: string | null
+          id?: string
+          investment_id?: string | null
+          note?: string | null
+          package_amount?: number
+          status?: string
+          to_address?: string | null
+          tx_hash?: string
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deposits_investment_id_fkey"
+            columns: ["investment_id"]
+            isOneToOne: false
+            referencedRelation: "investments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       investments: {
         Row: {
           activated_at: string
@@ -303,6 +359,10 @@ export type Database = {
           capital_lock_days: number
           claim_interval_hours: number
           daily_pct: number
+          demo_deposit_mode: boolean
+          deposit_min_confirmations: number
+          deposit_token_contract: string
+          deposit_wallet_address: string | null
           id: number
           l1_pct: number
           l2_pct: number
@@ -316,6 +376,10 @@ export type Database = {
           capital_lock_days?: number
           claim_interval_hours?: number
           daily_pct?: number
+          demo_deposit_mode?: boolean
+          deposit_min_confirmations?: number
+          deposit_token_contract?: string
+          deposit_wallet_address?: string | null
           id?: number
           l1_pct?: number
           l2_pct?: number
@@ -329,6 +393,10 @@ export type Database = {
           capital_lock_days?: number
           claim_interval_hours?: number
           daily_pct?: number
+          demo_deposit_mode?: boolean
+          deposit_min_confirmations?: number
+          deposit_token_contract?: string
+          deposit_wallet_address?: string | null
           id?: number
           l1_pct?: number
           l2_pct?: number

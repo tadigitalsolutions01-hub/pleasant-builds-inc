@@ -57,7 +57,7 @@ export const adminListPendingWithdrawals = createServerFn({ method: "GET" })
 
 export const adminReviewWithdrawal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z.object({ id: z.string().uuid(), action: z.enum(["approve", "reject"]), note: z.string().optional() }).parse(d),
   )
   .handler(async ({ data, context }) => {
@@ -81,7 +81,7 @@ export const adminListLocks = createServerFn({ method: "GET" })
 
 export const adminUnlockCapital = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ investmentId: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ investmentId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId, context.supabase);
     const { unlockCapital } = await import("./mws-engine.server");
@@ -90,7 +90,7 @@ export const adminUnlockCapital = createServerFn({ method: "POST" })
 
 export const adminUpdateSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         daily_pct: z.number().min(0).max(10).optional(),
@@ -124,7 +124,7 @@ export const adminRunSalary = createServerFn({ method: "POST" })
 
 export const adminBroadcast = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z.object({ title: z.string().min(1).max(120), body: z.string().max(2000).optional() }).parse(d),
   )
   .handler(async ({ data, context }) => {

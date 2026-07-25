@@ -9,8 +9,8 @@ export const Route = createFileRoute("/")({
     meta: [
       { title: "Meta World Space — Enter the AI Investment Grid" },
       { name: "description", content: "A futuristic AI-powered Web3 investment platform. Wallet-only access, robotic trading, and premium passive income." },
-      { property: "og:title", content: "Meta World Space" },
-      { property: "og:description", content: "Enter the AI investment grid. Wallet-only. Fully robotic." },
+      { property: "og:title", content: "Meta World Space — Enter the AI Investment Grid" },
+      { property: "og:description", content: "A futuristic AI-powered Web3 investment platform. Wallet-only access, robotic trading, and premium passive income." },
     ],
   }),
   component: Landing,

@@ -247,3 +247,100 @@ function SidebarItem({ item, onNavigate }: { item: NavItem; onNavigate: () => vo
     </Link>
   );
 }
+
+function BootOverlay({
+  error,
+  onRetry,
+  onSignOut,
+}: {
+  error?: Error;
+  onRetry?: () => void;
+  onSignOut?: () => void;
+}) {
+  const [dots, setDots] = useState(0);
+  const [step, setStep] = useState(0);
+  const steps = [
+    "Verifying wallet signature",
+    "Syncing on-chain identity",
+    "Loading grid profile",
+    "Booting AI core",
+  ];
+
+  useEffect(() => {
+    if (error) return;
+    const d = setInterval(() => setDots((n) => (n + 1) % 4), 400);
+    const s = setInterval(
+      () => setStep((n) => Math.min(n + 1, steps.length - 1)),
+      900,
+    );
+    return () => {
+      clearInterval(d);
+      clearInterval(s);
+    };
+  }, [error, steps.length]);
+
+  return (
+    <div className="relative grid min-h-screen place-items-center px-4">
+      <BgFx />
+      <div className="glass-strong relative w-full max-w-sm rounded-3xl p-8 text-center shadow-2xl">
+        {error ? (
+          <>
+            <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-red-500/10 text-red-300">
+              <AlertTriangle className="h-7 w-7" />
+            </div>
+            <h2 className="mt-5 font-display text-lg font-semibold">
+              Couldn't reach the grid
+            </h2>
+            <p className="mt-2 text-xs text-muted-foreground break-words">
+              {error.message || "Something went wrong loading your profile."}
+            </p>
+            <div className="mt-6 flex flex-col gap-2">
+              <button
+                onClick={onRetry}
+                className="rounded-full py-2.5 text-sm font-semibold text-primary-foreground [background:var(--gradient-primary)] glow"
+              >
+                Try again
+              </button>
+              <button
+                onClick={onSignOut}
+                className="rounded-full py-2.5 text-xs text-muted-foreground hover:text-foreground"
+              >
+                Sign out
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="relative mx-auto grid h-24 w-24 place-items-center">
+              <span className="absolute inset-0 animate-spin-slow rounded-full [background:var(--gradient-ring)] opacity-70 blur-md" />
+              <span className="relative grid h-20 w-20 place-items-center rounded-full bg-background">
+                <Loader2 className="h-7 w-7 animate-spin text-[oklch(0.85_0.19_210)]" />
+              </span>
+            </div>
+            <div className="mt-6 font-display text-lg">
+              {steps[step]}
+              <span className="inline-block w-6 text-left font-mono text-[oklch(0.85_0.19_210)]">
+                {".".repeat(dots)}
+              </span>
+            </div>
+            <div className="mt-4 flex justify-center gap-1.5">
+              {steps.map((_, i) => (
+                <span
+                  key={i}
+                  className={`h-1 w-6 rounded-full transition ${
+                    i <= step
+                      ? "bg-[oklch(0.85_0.19_210)]"
+                      : "bg-white/10"
+                  }`}
+                />
+              ))}
+            </div>
+            <p className="mt-6 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              Meta Word Space · Secure Uplink
+            </p>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}

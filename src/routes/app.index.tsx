@@ -95,6 +95,8 @@ function Dashboard() {
         </div>
       </section>
 
+      <ReferralCard code={profile.sponsor_code} />
+
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map((s) => <StatCard key={s.label} {...s} />)}
       </section>

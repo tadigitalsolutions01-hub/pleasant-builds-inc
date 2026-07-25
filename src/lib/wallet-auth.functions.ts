@@ -22,7 +22,10 @@ export const verifyWalletAndLogin = createServerFn({ method: "POST" })
       mintSessionForEmail,
       walletEmail,
     } = await import("./wallet-auth.server");
-    const { wallet } = await consumeAndVerifySignature(data.address, data.signature);
+    const profileCheck = await import("./wallet-auth.server");
+    // Don't consume the nonce yet if registration is needed — register step reuses it.
+    const preCheck = await profileCheck.findProfileByWallet(data.address.toLowerCase());
+    const { wallet } = await consumeAndVerifySignature(data.address, data.signature, { consume: !!preCheck });
     const profile = await findProfileByWallet(wallet);
     if (!profile) return { needsRegistration: true as const, wallet };
     const session = await mintSessionForEmail(walletEmail(wallet));

@@ -210,6 +210,9 @@ function ReferralCard({ code }: { code: string }) {
       </div>
     </section>
   );
+}
+
+
 
 function StatCard({ label, value, icon: Icon, tone }: { label: string; value: string; icon: React.ComponentType<{ className?: string }>; tone: "cyan" | "violet" | "pink" | "lime" }) {
   const toneColor = { cyan: "oklch(0.85 0.19 210)", violet: "oklch(0.7 0.24 295)", pink: "oklch(0.72 0.25 340)", lime: "oklch(0.87 0.22 145)" }[tone];

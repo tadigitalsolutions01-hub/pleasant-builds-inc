@@ -145,7 +145,13 @@ export async function claimDaily(userId: string) {
 
   const dailyRate = Number(settings.daily_pct) / 100;
   let totalCredited = 0;
-  const ledgerRows: Array<Record<string, unknown>> = [];
+  const ledgerRows: Array<{
+    user_id: string;
+    kind: "passive";
+    amount: number;
+    ref_investment_id: string;
+    meta: Record<string, unknown>;
+  }> = [];
 
   for (const inv of invs) {
     const remaining = Number(inv.cap_amount) - Number(inv.earned_passive);

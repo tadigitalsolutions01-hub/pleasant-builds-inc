@@ -31,7 +31,7 @@ export const updateMyProfile = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const patch: Record<string, string | null> = {};
+    const patch: { username?: string; avatar_url?: string | null } = {};
     if (data.username !== undefined) patch.username = data.username;
     if (data.avatar_url !== undefined) patch.avatar_url = data.avatar_url || null;
     if (!Object.keys(patch).length) return { ok: true };
@@ -60,7 +60,7 @@ export const getMyActivities = createServerFn({ method: "GET" })
       .eq("user_id", context.userId)
       .order("created_at", { ascending: false })
       .limit(data.limit);
-    if (data.kinds?.length) q = q.in("kind", data.kinds);
+    if (data.kinds?.length) q = q.in("kind", data.kinds as never[]);
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
     return rows ?? [];

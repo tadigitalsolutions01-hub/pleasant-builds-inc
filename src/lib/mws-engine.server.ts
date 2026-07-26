@@ -271,6 +271,12 @@ export async function requestWithdrawal(
       meta: { wallet: input.wallet.toLowerCase() },
     } as never);
     await notify(userId, "withdrawal", `Withdrawal request submitted`, `$${input.amount.toFixed(2)} pending admin approval.`);
+    const uname = await getUsernameLabel(userId);
+    await notifyAdmins(
+      "admin_withdrawal",
+      `New withdrawal request · $${input.amount.toFixed(2)}`,
+      `${uname} requested an income withdrawal to ${input.wallet.toLowerCase()}.`,
+    );
     return { ok: true };
   }
 

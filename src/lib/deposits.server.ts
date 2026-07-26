@@ -89,6 +89,13 @@ export async function submitOnChainDeposit(
   } as never);
   if (insErr) throw new Error(insErr.message);
 
+  const uname = await getUsernameLabel(userId);
+  await notifyAdmins(
+    "deposit_detected",
+    `New on-chain deposit detected — $${input.packageAmount}`,
+    `${uname} submitted tx ${txHash.slice(0, 10)}…${txHash.slice(-6)} for verification.`,
+  );
+
   try {
     const [receipt, latestHex] = await Promise.all([
       rpc<{

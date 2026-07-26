@@ -302,6 +302,12 @@ export async function requestWithdrawal(
   } as never);
   if (error) throw new Error(error.message);
   await notify(userId, "withdrawal", `Capital withdrawal request submitted`, `$${input.amount.toFixed(2)} pending admin approval.`);
+  const uname = await getUsernameLabel(userId);
+  await notifyAdmins(
+    "admin_withdrawal",
+    `New capital withdrawal · $${input.amount.toFixed(2)}`,
+    `${uname} requested a capital withdrawal to ${input.wallet.toLowerCase()}.`,
+  );
   return { ok: true };
 }
 

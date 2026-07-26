@@ -24,6 +24,20 @@ async function notify(userId: string, type: string, title: string, body?: string
   await supabaseAdmin.from("notifications").insert({ user_id: userId, type, title, body } as never);
 }
 
+async function notifyAdmins(type: string, title: string, body?: string) {
+  const { data } = await supabaseAdmin.from("user_roles").select("user_id").eq("role", "admin");
+  const ids = Array.from(new Set((data ?? []).map((r) => r.user_id))).filter(Boolean);
+  if (!ids.length) return;
+  await supabaseAdmin
+    .from("notifications")
+    .insert(ids.map((user_id) => ({ user_id, type, title, body })) as never);
+}
+
+async function getUsernameLabel(userId: string) {
+  const { data } = await supabaseAdmin.from("profiles").select("username").eq("id", userId).maybeSingle();
+  return data?.username ?? userId.slice(0, 8);
+}
+
 async function getSponsorChain(userId: string, depth: number) {
   const chain: string[] = [];
   let currentId: string | null = userId;
@@ -257,6 +271,12 @@ export async function requestWithdrawal(
       meta: { wallet: input.wallet.toLowerCase() },
     } as never);
     await notify(userId, "withdrawal", `Withdrawal request submitted`, `$${input.amount.toFixed(2)} pending admin approval.`);
+    const uname = await getUsernameLabel(userId);
+    await notifyAdmins(
+      "admin_withdrawal",
+      `New withdrawal request · $${input.amount.toFixed(2)}`,
+      `${uname} requested an income withdrawal to ${input.wallet.toLowerCase()}.`,
+    );
     return { ok: true };
   }
 
@@ -282,6 +302,12 @@ export async function requestWithdrawal(
   } as never);
   if (error) throw new Error(error.message);
   await notify(userId, "withdrawal", `Capital withdrawal request submitted`, `$${input.amount.toFixed(2)} pending admin approval.`);
+  const uname = await getUsernameLabel(userId);
+  await notifyAdmins(
+    "admin_withdrawal",
+    `New capital withdrawal · $${input.amount.toFixed(2)}`,
+    `${uname} requested a capital withdrawal to ${input.wallet.toLowerCase()}.`,
+  );
   return { ok: true };
 }
 
@@ -326,6 +352,12 @@ export async function reviewWithdrawal(
     "withdrawal",
     `Withdrawal ${newStatus}`,
     `$${Number(wd.amount).toFixed(2)} ${wd.kind} withdrawal ${newStatus}.`,
+  );
+  const uname = await getUsernameLabel(wd.user_id);
+  await notifyAdmins(
+    "admin_withdrawal",
+    `Withdrawal ${newStatus} · $${Number(wd.amount).toFixed(2)}`,
+    `${uname}'s ${wd.kind} withdrawal was ${newStatus}${input.note ? ` — ${input.note}` : ""}.`,
   );
   return { ok: true };
 }

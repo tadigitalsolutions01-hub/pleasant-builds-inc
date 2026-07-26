@@ -24,6 +24,20 @@ async function notify(userId: string, type: string, title: string, body?: string
   await supabaseAdmin.from("notifications").insert({ user_id: userId, type, title, body } as never);
 }
 
+async function notifyAdmins(type: string, title: string, body?: string) {
+  const { data } = await supabaseAdmin.from("user_roles").select("user_id").eq("role", "admin");
+  const ids = Array.from(new Set((data ?? []).map((r) => r.user_id))).filter(Boolean);
+  if (!ids.length) return;
+  await supabaseAdmin
+    .from("notifications")
+    .insert(ids.map((user_id) => ({ user_id, type, title, body })) as never);
+}
+
+async function getUsernameLabel(userId: string) {
+  const { data } = await supabaseAdmin.from("profiles").select("username").eq("id", userId).maybeSingle();
+  return data?.username ?? userId.slice(0, 8);
+}
+
 async function getSponsorChain(userId: string, depth: number) {
   const chain: string[] = [];
   let currentId: string | null = userId;

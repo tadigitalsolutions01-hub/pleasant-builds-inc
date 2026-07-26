@@ -1,6 +1,20 @@
 // Server-only on-chain USDT (BEP20) deposit verification.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+async function notifyAdmins(type: string, title: string, body?: string) {
+  const { data } = await supabaseAdmin.from("user_roles").select("user_id").eq("role", "admin");
+  const ids = Array.from(new Set((data ?? []).map((r) => r.user_id))).filter(Boolean);
+  if (!ids.length) return;
+  await supabaseAdmin
+    .from("notifications")
+    .insert(ids.map((user_id) => ({ user_id, type, title, body })) as never);
+}
+
+async function getUsernameLabel(userId: string) {
+  const { data } = await supabaseAdmin.from("profiles").select("username").eq("id", userId).maybeSingle();
+  return data?.username ?? userId.slice(0, 8);
+}
+
 const BSC_RPC = "https://bsc-dataseed.binance.org";
 // ERC20 Transfer(address,address,uint256) signature
 const TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
@@ -75,6 +89,13 @@ export async function submitOnChainDeposit(
   } as never);
   if (insErr) throw new Error(insErr.message);
 
+  const uname = await getUsernameLabel(userId);
+  await notifyAdmins(
+    "deposit_detected",
+    `New on-chain deposit detected — $${input.packageAmount}`,
+    `${uname} submitted tx ${txHash.slice(0, 10)}…${txHash.slice(-6)} for verification.`,
+  );
+
   try {
     const [receipt, latestHex] = await Promise.all([
       rpc<{
@@ -132,6 +153,12 @@ export async function submitOnChainDeposit(
         verified_at: new Date().toISOString(),
       })
       .eq("tx_hash", txHash);
+
+    await notifyAdmins(
+      "deposit_verified",
+      `Deposit confirmed — $${expected} from ${uname}`,
+      `Tx ${txHash.slice(0, 10)}…${txHash.slice(-6)} reached ${confirmations} confirmations and package was activated.`,
+    );
 
     return { ok: true, investmentId: activation.investmentId, amount: expected };
   } catch (err) {

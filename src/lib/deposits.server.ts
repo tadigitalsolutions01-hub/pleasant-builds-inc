@@ -154,6 +154,12 @@ export async function submitOnChainDeposit(
       })
       .eq("tx_hash", txHash);
 
+    await notifyAdmins(
+      "deposit_verified",
+      `Deposit confirmed — $${expected} from ${uname}`,
+      `Tx ${txHash.slice(0, 10)}…${txHash.slice(-6)} reached ${confirmations} confirmations and package was activated.`,
+    );
+
     return { ok: true, investmentId: activation.investmentId, amount: expected };
   } catch (err) {
     await supabaseAdmin

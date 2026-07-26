@@ -353,6 +353,12 @@ export async function reviewWithdrawal(
     `Withdrawal ${newStatus}`,
     `$${Number(wd.amount).toFixed(2)} ${wd.kind} withdrawal ${newStatus}.`,
   );
+  const uname = await getUsernameLabel(wd.user_id);
+  await notifyAdmins(
+    "admin_withdrawal",
+    `Withdrawal ${newStatus} · $${Number(wd.amount).toFixed(2)}`,
+    `${uname}'s ${wd.kind} withdrawal was ${newStatus}${input.note ? ` — ${input.note}` : ""}.`,
+  );
   return { ok: true };
 }
 

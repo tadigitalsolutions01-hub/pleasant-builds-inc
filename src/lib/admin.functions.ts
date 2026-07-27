@@ -78,12 +78,20 @@ export const adminListLocks = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     await assertAdmin(context.userId, context.supabase);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data } = await supabaseAdmin
+    const { data: locks } = await supabaseAdmin
       .from("capital_locks")
-      .select("investment_id, user_id, unlock_at, unlocked_at, investments!inner(amount), profiles:profiles!capital_locks_user_id_fkey(username)")
+      .select("investment_id, user_id, unlock_at, unlocked_at, investments!inner(amount)")
       .order("unlock_at", { ascending: true })
       .limit(200);
-    return data ?? [];
+    const rows = locks ?? [];
+    if (rows.length === 0) return [];
+    const userIds = Array.from(new Set(rows.map((r: any) => r.user_id)));
+    const { data: profs } = await supabaseAdmin
+      .from("profiles")
+      .select("id, username")
+      .in("id", userIds);
+    const map = new Map((profs ?? []).map((p: any) => [p.id, p]));
+    return rows.map((r: any) => ({ ...r, profiles: map.get(r.user_id) ?? null }));
   });
 
 export const adminUnlockCapital = createServerFn({ method: "POST" })

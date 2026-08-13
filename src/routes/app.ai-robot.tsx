@@ -80,7 +80,7 @@ function AIRobotPage() {
             <div className="glass mt-6 rounded-2xl p-5">
               <div className="flex items-center justify-between">
                 <div className="text-xs uppercase tracking-widest text-muted-foreground">
-                  {!status?.hasInvestment ? "Activate a package to start" : ready ? "Cycle complete" : "Next claim in"}
+                  {!status?.hasInvestment ? "Activate a package to start" : ready ? "Claim pending · next 24h starts after claim" : "Next claim in"}
                 </div>
                 {ready && <span className="rounded-full bg-[oklch(0.87_0.22_145)/20] px-2 py-0.5 font-mono text-[10px] text-[oklch(0.87_0.22_145)]">READY</span>}
               </div>

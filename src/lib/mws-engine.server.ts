@@ -226,6 +226,8 @@ export async function claimStatus(userId: string) {
     intervalMs,
     nextAtIso: new Date(nextAt).toISOString(),
     hasInvestment: !!firstInv,
+    // Next countdown only starts once the pending claim is taken.
+    claimPending: !!firstInv && Date.now() >= nextAt,
   };
 }
 

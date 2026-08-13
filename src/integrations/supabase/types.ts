@@ -435,6 +435,9 @@ export type Database = {
           id: string
           kind: Database["public"]["Enums"]["withdrawal_kind"]
           note: string | null
+          payout_error: string | null
+          payout_status: string
+          payout_tx_hash: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           status: Database["public"]["Enums"]["withdrawal_status"]
@@ -447,6 +450,9 @@ export type Database = {
           id?: string
           kind: Database["public"]["Enums"]["withdrawal_kind"]
           note?: string | null
+          payout_error?: string | null
+          payout_status?: string
+          payout_tx_hash?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["withdrawal_status"]
@@ -459,6 +465,9 @@ export type Database = {
           id?: string
           kind?: Database["public"]["Enums"]["withdrawal_kind"]
           note?: string | null
+          payout_error?: string | null
+          payout_status?: string
+          payout_tx_hash?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["withdrawal_status"]

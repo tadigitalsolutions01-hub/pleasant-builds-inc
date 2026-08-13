@@ -189,3 +189,62 @@ export const adminBroadcast = createServerFn({ method: "POST" })
     } as never);
     return { ok: true };
   });
+
+export const adminListSalaryLevels = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId, context.supabase);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const [levels, payouts] = await Promise.all([
+      supabaseAdmin.from("salary_levels").select("*").order("level", { ascending: true }),
+      supabaseAdmin
+        .from("salary_payouts")
+        .select("id, user_id, level, week_start, amount, paid_at")
+        .order("paid_at", { ascending: false })
+        .limit(100),
+    ]);
+    const rows = payouts.data ?? [];
+    const ids = Array.from(new Set(rows.map((p) => p.user_id)));
+    const { data: profs } = ids.length
+      ? await supabaseAdmin.from("profiles").select("id, username").in("id", ids)
+      : { data: [] as { id: string; username: string }[] };
+    const map = new Map((profs ?? []).map((p) => [p.id, p]));
+    return {
+      levels: levels.data ?? [],
+      payouts: rows.map((p) => ({ ...p, username: map.get(p.user_id)?.username ?? "—" })),
+    };
+  });
+
+const salaryLevelSchema = z.object({
+  level: z.number().int().min(1).max(20),
+  self_invest_min: z.number().min(0),
+  direct_min: z.number().int().min(0),
+  team_min: z.number().int().min(0),
+  team_invest_min: z.number().min(0),
+  weekly_amount: z.number().min(0),
+  active: z.boolean(),
+});
+
+export const adminUpsertSalaryLevel = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => salaryLevelSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId, context.supabase);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("salary_levels")
+      .upsert(data as never, { onConflict: "level" });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const adminDeleteSalaryLevel = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => z.object({ level: z.number().int().min(1).max(20) }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId, context.supabase);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("salary_levels").delete().eq("level", data.level);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

@@ -108,12 +108,13 @@ export const getPackages = createServerFn({ method: "GET" }).handler(async () =>
   return data ?? [];
 });
 
-export const getSettings = createServerFn({ method: "GET" }).handler(async () => {
-  const { supabase } = await import("@/integrations/supabase/client");
-  const { data, error } = await supabase.from("system_settings").select("*").eq("id", 1).single();
-  if (error) throw new Error(error.message);
-  return data;
-});
+export const getSettings = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase.from("system_settings").select("*").eq("id", 1).single();
+    if (error) throw new Error(error.message);
+    return data;
+  });
 
 export const activatePackageFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

@@ -15,6 +15,7 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppSalaryRouteImport } from './routes/app.salary'
 import { Route as AppProfileRouteImport } from './routes/app.profile'
 import { Route as AppPackagesRouteImport } from './routes/app.packages'
 import { Route as AppNotificationsRouteImport } from './routes/app.notifications'
@@ -57,6 +58,11 @@ const IndexRoute = IndexRouteImport.update({
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSalaryRoute = AppSalaryRouteImport.update({
+  id: '/salary',
+  path: '/salary',
   getParentRoute: () => AppRoute,
 } as any)
 const AppProfileRoute = AppProfileRouteImport.update({
@@ -135,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/app/notifications': typeof AppNotificationsRoute
   '/app/packages': typeof AppPackagesRoute
   '/app/profile': typeof AppProfileRoute
+  '/app/salary': typeof AppSalaryRoute
   '/app/': typeof AppIndexRoute
   '/app/history/direct': typeof AppHistoryDirectRoute
   '/app/history/passive': typeof AppHistoryPassiveRoute
@@ -155,6 +162,7 @@ export interface FileRoutesByTo {
   '/app/notifications': typeof AppNotificationsRoute
   '/app/packages': typeof AppPackagesRoute
   '/app/profile': typeof AppProfileRoute
+  '/app/salary': typeof AppSalaryRoute
   '/app': typeof AppIndexRoute
   '/app/history/direct': typeof AppHistoryDirectRoute
   '/app/history/passive': typeof AppHistoryPassiveRoute
@@ -177,6 +185,7 @@ export interface FileRoutesById {
   '/app/notifications': typeof AppNotificationsRoute
   '/app/packages': typeof AppPackagesRoute
   '/app/profile': typeof AppProfileRoute
+  '/app/salary': typeof AppSalaryRoute
   '/app/': typeof AppIndexRoute
   '/app/history/direct': typeof AppHistoryDirectRoute
   '/app/history/passive': typeof AppHistoryPassiveRoute
@@ -200,6 +209,7 @@ export interface FileRouteTypes {
     | '/app/notifications'
     | '/app/packages'
     | '/app/profile'
+    | '/app/salary'
     | '/app/'
     | '/app/history/direct'
     | '/app/history/passive'
@@ -220,6 +230,7 @@ export interface FileRouteTypes {
     | '/app/notifications'
     | '/app/packages'
     | '/app/profile'
+    | '/app/salary'
     | '/app'
     | '/app/history/direct'
     | '/app/history/passive'
@@ -241,6 +252,7 @@ export interface FileRouteTypes {
     | '/app/notifications'
     | '/app/packages'
     | '/app/profile'
+    | '/app/salary'
     | '/app/'
     | '/app/history/direct'
     | '/app/history/passive'
@@ -303,6 +315,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/app/'
       preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/salary': {
+      id: '/app/salary'
+      path: '/salary'
+      fullPath: '/app/salary'
+      preLoaderRoute: typeof AppSalaryRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/profile': {
@@ -404,6 +423,7 @@ interface AppRouteChildren {
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppPackagesRoute: typeof AppPackagesRoute
   AppProfileRoute: typeof AppProfileRoute
+  AppSalaryRoute: typeof AppSalaryRoute
   AppIndexRoute: typeof AppIndexRoute
   AppHistoryDirectRoute: typeof AppHistoryDirectRoute
   AppHistoryPassiveRoute: typeof AppHistoryPassiveRoute
@@ -421,6 +441,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppNotificationsRoute: AppNotificationsRoute,
   AppPackagesRoute: AppPackagesRoute,
   AppProfileRoute: AppProfileRoute,
+  AppSalaryRoute: AppSalaryRoute,
   AppIndexRoute: AppIndexRoute,
   AppHistoryDirectRoute: AppHistoryDirectRoute,
   AppHistoryPassiveRoute: AppHistoryPassiveRoute,

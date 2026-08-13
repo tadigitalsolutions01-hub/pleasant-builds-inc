@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   LayoutDashboard, Package, History, ArrowDownToLine, Users, Settings, Bot,
-  ChevronDown, LogOut, Menu, Wallet as WalletIcon, X, Bell, ShieldAlert,
+  ChevronDown, LogOut, Menu, Wallet as WalletIcon, X, Bell, ShieldAlert, Trophy,
   Loader2, AlertTriangle,
 } from "lucide-react";
 import { Logo } from "@/components/mws/logo";
@@ -46,6 +46,7 @@ const NAV: NavItem[] = [
       { label: "Level 3", to: "/app/team/level-3" },
     ]
   },
+  { label: "Weekly Salary", icon: Trophy, to: "/app/salary" },
   { label: "Notifications", icon: Bell, to: "/app/notifications" },
   { label: "Profile", icon: Settings, to: "/app/profile" },
   { label: "AI Robot", icon: Bot, to: "/app/ai-robot" },

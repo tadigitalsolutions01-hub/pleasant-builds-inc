@@ -218,3 +218,45 @@ export const getMyDeposits = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return data ?? [];
   });
+
+export const getSalaryOverview = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const [levelsRes, payoutsRes, statsRes] = await Promise.all([
+      context.supabase
+        .from("salary_levels")
+        .select("level, self_invest_min, direct_min, team_min, team_invest_min, weekly_amount, active")
+        .eq("active", true)
+        .order("level", { ascending: true }),
+      context.supabase
+        .from("salary_payouts")
+        .select("id, level, week_start, amount, paid_at")
+        .eq("user_id", context.userId)
+        .order("paid_at", { ascending: false })
+        .limit(52),
+      context.supabase.rpc("get_user_stats", { _user_id: context.userId }),
+    ]);
+
+    const s = statsRes.data?.[0];
+    let teamInvest = 0;
+    for (let lv = 1; lv <= 10; lv++) {
+      const { data: rows } = await context.supabase.rpc("get_team_by_level", {
+        _user_id: context.userId,
+        _level: lv,
+      });
+      if (!rows?.length) break;
+      for (const r of rows) teamInvest += Number((r as { investment: number }).investment ?? 0);
+    }
+
+    return {
+      levels: levelsRes.data ?? [],
+      payouts: payoutsRes.data ?? [],
+      metrics: {
+        self_invest: Number(s?.total_investment ?? 0),
+        directs: Number(s?.direct_partners ?? 0),
+        team: Number(s?.total_team ?? 0),
+        team_invest: teamInvest,
+        salary_income: Number(s?.salary_income ?? 0),
+      },
+    };
+  });

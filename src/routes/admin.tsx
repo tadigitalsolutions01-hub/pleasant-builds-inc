@@ -20,13 +20,14 @@ import {
   adminUnlockCapital,
   adminUpdateSettings,
 } from "@/lib/admin.functions";
+import { SalaryTab } from "@/components/mws/admin-salary";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin Console · Meta Word Space" }, { name: "description", content: "Admin control panel." }] }),
   component: AdminPage,
 });
 
-const TABS = ["Overview", "Deposits", "Withdrawals", "Users", "Capital Locks", "Settings", "Announcements"] as const;
+const TABS = ["Overview", "Deposits", "Withdrawals", "Users", "Capital Locks", "Salary", "Settings", "Announcements"] as const;
 type Tab = (typeof TABS)[number];
 
 function AdminPage() {
@@ -86,6 +87,7 @@ function AdminPage() {
         {tab === "Withdrawals" && <Withdrawals />}
         {tab === "Users" && <Users />}
         {tab === "Capital Locks" && <Locks />}
+        {tab === "Salary" && <SalaryTab />}
         {tab === "Settings" && <SettingsTab />}
         {tab === "Announcements" && <Announcements />}
       </div>

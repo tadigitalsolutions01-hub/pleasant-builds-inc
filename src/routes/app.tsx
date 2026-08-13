@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   LayoutDashboard, Package, History, ArrowDownToLine, Users, Settings, Bot,
-  ChevronDown, LogOut, Menu, Wallet as WalletIcon, X, Bell, ShieldAlert,
+  ChevronDown, LogOut, Menu, Wallet as WalletIcon, X, Bell, ShieldAlert, Trophy,
   Loader2, AlertTriangle,
 } from "lucide-react";
 import { Logo } from "@/components/mws/logo";

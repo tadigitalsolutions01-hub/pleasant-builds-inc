@@ -142,7 +142,7 @@ export async function claimDaily(userId: string) {
     .maybeSingle();
   const baseline = last || (firstInv ? new Date(firstInv.activated_at).getTime() : now);
   const elapsed = now - baseline;
-  const cycles = Math.floor(elapsed / intervalMs);
+  const cycles = elapsed >= intervalMs ? 1 : 0;
   if (cycles < 1) {
     const nextAt = new Date(baseline + intervalMs).toISOString();
     throw new Error(`Next claim available at ${nextAt}`);
@@ -173,7 +173,7 @@ export async function claimDaily(userId: string) {
       await supabaseAdmin.from("investments").update({ status: "capped" }).eq("id", inv.id);
       continue;
     }
-    const gross = Number(inv.amount) * dailyRate * cycles;
+    const gross = Number(inv.amount) * dailyRate;
     const credit = Number(Math.min(gross, remaining).toFixed(4));
     if (credit <= 0) continue;
     totalCredited += credit;
@@ -197,7 +197,7 @@ export async function claimDaily(userId: string) {
   await supabaseAdmin.from("ledger_entries").insert(ledgerRows as never);
   await supabaseAdmin
     .from("claim_state")
-    .upsert({ user_id: userId, last_claim_at: new Date(baseline + cycles * intervalMs).toISOString() });
+    .upsert({ user_id: userId, last_claim_at: new Date(now).toISOString() });
   await notify(userId, "claim", `Claimed $${totalCredited.toFixed(4)}`, `AI robot yield credited.`);
 
   return { credited: totalCredited, cycles };

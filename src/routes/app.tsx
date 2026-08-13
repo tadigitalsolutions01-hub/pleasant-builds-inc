@@ -46,6 +46,7 @@ const NAV: NavItem[] = [
       { label: "Level 3", to: "/app/team/level-3" },
     ]
   },
+  { label: "Weekly Salary", icon: Trophy, to: "/app/salary" },
   { label: "Notifications", icon: Bell, to: "/app/notifications" },
   { label: "Profile", icon: Settings, to: "/app/profile" },
   { label: "AI Robot", icon: Bot, to: "/app/ai-robot" },

@@ -49,7 +49,7 @@ export const adminListPendingWithdrawals = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: wds } = await supabaseAdmin
       .from("withdrawals")
-      .select("id, user_id, kind, amount, wallet_address, status, created_at")
+      .select("id, user_id, kind, amount, wallet_address, status, created_at, payout_tx_hash, payout_status, payout_error")
       .order("created_at", { ascending: false })
       .limit(200);
     const rows = wds ?? [];

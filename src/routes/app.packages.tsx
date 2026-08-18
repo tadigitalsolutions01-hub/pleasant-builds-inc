@@ -13,6 +13,7 @@ import {
   submitDepositFn,
 } from "@/lib/mws.functions";
 import { useStats } from "@/hooks/use-profile";
+import { sendUsdt } from "@/lib/wallet-client";
 
 export const Route = createFileRoute("/app/packages")({
   head: () => ({ meta: [{ title: "Packages · Meta Word Space" }, { name: "description", content: "AI investment packages from $10 to $2560." }] }),
@@ -123,6 +124,7 @@ function PackagesPage() {
         <DepositModal
           amount={depositFor}
           wallet={((settings as any)?.deposit_wallet_address ?? "") as string}
+          token={((settings as any)?.deposit_token_contract ?? "") as string}
           onClose={() => setDepositFor(null)}
         />
       )}
@@ -130,7 +132,7 @@ function PackagesPage() {
   );
 }
 
-function DepositModal({ amount, wallet, onClose }: { amount: number; wallet: string; onClose: () => void }) {
+function DepositModal({ amount, wallet, token, onClose }: { amount: number; wallet: string; token: string; onClose: () => void }) {
   const qc = useQueryClient();
   const submit = useServerFn(submitDepositFn);
   const [txHash, setTxHash] = useState("");
@@ -147,6 +149,18 @@ function DepositModal({ amount, wallet, onClose }: { amount: number; wallet: str
   });
 
   const copy = (v: string) => { navigator.clipboard.writeText(v); toast.success("Copied"); };
+
+  const pay = useMutation({
+    mutationFn: () => sendUsdt({ token, to: wallet, amount }),
+    onSuccess: (hash) => {
+      setTxHash(hash);
+      toast.success("Transaction sent — waiting for confirmations");
+    },
+    onError: (e: Error) =>
+      toast.error(
+        /user rejected|denied/i.test(e.message) ? "Transaction rejected in your wallet." : e.message,
+      ),
+  });
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-background/70 p-4 backdrop-blur-sm">
@@ -175,6 +189,16 @@ function DepositModal({ amount, wallet, onClose }: { amount: number; wallet: str
                 <button onClick={() => copy(wallet)} className="rounded-full p-1.5 hover:bg-white/10"><Copy className="h-3.5 w-3.5" /></button>
               </div>
             </div>
+
+            <button
+              onClick={() => pay.mutate()}
+              disabled={pay.isPending || !token}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-primary/40 bg-primary/10 py-2.5 text-sm font-semibold text-primary hover:bg-primary/20 disabled:opacity-60"
+            >
+              {pay.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
+              {pay.isPending ? "Confirm in wallet…" : `Pay $${amount} USDT with wallet`}
+            </button>
+            <div className="mt-2 text-center text-[11px] text-muted-foreground">or send manually and paste the hash</div>
 
             <ol className="mt-4 space-y-1.5 text-xs text-muted-foreground">
               <li>1. Open your BEP20 wallet (BSC network).</li>

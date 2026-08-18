@@ -246,11 +246,12 @@ function Withdrawals() {
     <div className="glass-strong overflow-x-auto rounded-3xl">
       <table className="w-full text-sm">
         <thead className="text-left text-xs uppercase tracking-widest text-muted-foreground">
-          <tr><th className="px-5 py-3">Date</th><th className="px-5 py-3">User</th><th className="px-5 py-3">Kind</th><th className="px-5 py-3">Amount</th><th className="px-5 py-3">Wallet</th><th className="px-5 py-3">Status</th><th className="px-5 py-3"></th></tr>
+          <tr><th className="px-5 py-3">Date</th><th className="px-5 py-3">User</th><th className="px-5 py-3">Kind</th><th className="px-5 py-3">Amount</th><th className="px-5 py-3">Wallet</th><th className="px-5 py-3">Status</th><th className="px-5 py-3">Payout</th><th className="px-5 py-3"></th></tr>
         </thead>
         <tbody className="divide-y divide-border/60">
           {(data as any ?? []).map((w: {
             id: string; created_at: string; kind: string; amount: number; wallet_address: string; status: string;
+            payout_tx_hash: string | null; payout_status: string | null; payout_error: string | null;
             profiles: { username: string };
           }) => (
             <tr key={w.id}>
@@ -260,6 +261,17 @@ function Withdrawals() {
               <td className="px-5 py-3 font-mono">${Number(w.amount).toFixed(2)}</td>
               <td className="px-5 py-3 font-mono text-[11px] text-muted-foreground">{w.wallet_address.slice(0, 10)}…{w.wallet_address.slice(-6)}</td>
               <td className="px-5 py-3 capitalize">{w.status}</td>
+              <td className="px-5 py-3 text-xs">
+                {w.payout_tx_hash ? (
+                  <a href={`https://bscscan.com/tx/${w.payout_tx_hash}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-mono text-[11px] text-emerald-300 hover:underline">
+                    {w.payout_tx_hash.slice(0, 10)}…{w.payout_tx_hash.slice(-6)} <ExternalLink className="h-3 w-3" />
+                  </a>
+                ) : w.payout_status === "failed" ? (
+                  <span className="text-red-300" title={w.payout_error ?? ""}>Failed</span>
+                ) : (
+                  <span className="text-muted-foreground">—</span>
+                )}
+              </td>
               <td className="px-5 py-3 text-right">
                 {w.status === "pending" && (
                   <span className="flex justify-end gap-2">
@@ -271,7 +283,7 @@ function Withdrawals() {
             </tr>
           ))}
           {(data ?? []).length === 0 && (
-            <tr><td colSpan={7} className="px-5 py-8 text-center text-muted-foreground">No withdrawals.</td></tr>
+            <tr><td colSpan={8} className="px-5 py-8 text-center text-muted-foreground">No withdrawals.</td></tr>
           )}
         </tbody>
       </table>

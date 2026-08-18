@@ -349,20 +349,59 @@ export async function reviewWithdrawal(
     } as never);
   }
 
+  // On approval, pay out on-chain from the treasury hot wallet.
+  let payoutTx: string | null = null;
+  let payoutError: string | null = null;
+  if (input.action === "approve") {
+    try {
+      const { data: st } = await supabaseAdmin
+        .from("system_settings")
+        .select("deposit_token_contract, demo_deposit_mode")
+        .eq("id", 1)
+        .single();
+      if (st?.demo_deposit_mode) {
+        payoutError = "Demo mode — no on-chain transfer sent.";
+      } else {
+        const { sendUsdtPayout } = await import("./payout.server");
+        const res = await sendUsdtPayout({
+          to: wd.wallet_address,
+          amount: Number(wd.amount),
+          token: (st?.deposit_token_contract as string) ?? "0x55d398326f99059ff775485246999027b3197955",
+        });
+        payoutTx = res.txHash;
+      }
+    } catch (err) {
+      payoutError = err instanceof Error ? err.message : String(err);
+    }
+    await supabaseAdmin
+      .from("withdrawals")
+      .update({
+        payout_tx_hash: payoutTx,
+        payout_status: payoutTx ? "sent" : "failed",
+        payout_error: payoutError,
+      } as never)
+      .eq("id", input.id);
+  }
+
   await notify(
     wd.user_id,
     "withdrawal",
     `Withdrawal ${newStatus}`,
-    `$${Number(wd.amount).toFixed(2)} ${wd.kind} withdrawal ${newStatus}.`,
+    payoutTx
+      ? `$${Number(wd.amount).toFixed(2)} ${wd.kind} withdrawal sent on-chain. Tx ${payoutTx.slice(0, 10)}…${payoutTx.slice(-6)}`
+      : `$${Number(wd.amount).toFixed(2)} ${wd.kind} withdrawal ${newStatus}.`,
   );
   const uname = await getUsernameLabel(wd.user_id);
   await notifyAdmins(
     "admin_withdrawal",
     `Withdrawal ${newStatus} · $${Number(wd.amount).toFixed(2)}`,
-    `${uname}'s ${wd.kind} withdrawal was ${newStatus}${input.note ? ` — ${input.note}` : ""}.`,
+    `${uname}'s ${wd.kind} withdrawal was ${newStatus}${input.note ? ` — ${input.note}` : ""}.${
+      payoutError ? ` Payout issue: ${payoutError}` : payoutTx ? ` Payout tx ${payoutTx}` : ""
+    }`,
   );
-  return { ok: true };
+  return { ok: true, payoutTxHash: payoutTx, payoutError };
 }
+
 
 export async function unlockCapital(adminId: string, investmentId: string) {
   const { data: lock } = await supabaseAdmin

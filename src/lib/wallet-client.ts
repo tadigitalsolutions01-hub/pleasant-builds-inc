@@ -49,3 +49,60 @@ export async function connectAndSign(id: WalletId, message: string): Promise<{ a
   })) as string;
   return { address, signature };
 }
+
+const BSC_CHAIN_ID = "0x38";
+const BSC_PARAMS = {
+  chainId: BSC_CHAIN_ID,
+  chainName: "BNB Smart Chain",
+  nativeCurrency: { name: "BNB", symbol: "BNB", decimals: 18 },
+  rpcUrls: ["https://bsc-dataseed.binance.org"],
+  blockExplorerUrls: ["https://bscscan.com"],
+};
+
+function toHex(n: bigint) {
+  return "0x" + n.toString(16);
+}
+
+/** ERC20 transfer(address,uint256) calldata for an 18-decimal token. */
+function encodeTransfer(to: string, amount: number): string {
+  const selector = "a9059cbb";
+  const addr = to.toLowerCase().replace(/^0x/, "").padStart(64, "0");
+  // 18 decimals, avoid float drift by using integer cents math
+  const units = (BigInt(Math.round(amount * 1e6)) * 10n ** 12n).toString(16).padStart(64, "0");
+  return `0x${selector}${addr}${units}`;
+}
+
+async function ensureBsc(provider: EthProvider) {
+  const chainId = (await provider.request({ method: "eth_chainId" })) as string;
+  if (chainId?.toLowerCase() === BSC_CHAIN_ID) return;
+  try {
+    await provider.request({ method: "wallet_switchEthereumChain", params: [{ chainId: BSC_CHAIN_ID }] });
+  } catch (err) {
+    const code = (err as { code?: number })?.code;
+    if (code === 4902 || code === -32603) {
+      await provider.request({ method: "wallet_addEthereumChain", params: [BSC_PARAMS] });
+    } else {
+      throw err;
+    }
+  }
+}
+
+/** Sends USDT (BEP20) from the user's connected wallet. Returns the tx hash. */
+export async function sendUsdt(opts: { token: string; to: string; amount: number }): Promise<string> {
+  if (typeof window === "undefined" || !window.ethereum) {
+    throw new Error("No wallet detected. Open this site in MetaMask / Trust Wallet, or install the extension.");
+  }
+  const list: EthProvider[] = window.ethereum.providers?.length ? window.ethereum.providers : [window.ethereum];
+  const provider = list[0]!;
+  const accounts = (await provider.request({ method: "eth_requestAccounts" })) as string[];
+  const from = (accounts?.[0] ?? "").toLowerCase();
+  if (!/^0x[0-9a-fA-F]{40}$/.test(from)) throw new Error("Failed to read wallet address.");
+  if (!/^0x[0-9a-fA-F]{40}$/.test(opts.to)) throw new Error("Platform deposit wallet is not configured.");
+  if (!/^0x[0-9a-fA-F]{40}$/.test(opts.token)) throw new Error("USDT contract is not configured.");
+  await ensureBsc(provider);
+  const hash = (await provider.request({
+    method: "eth_sendTransaction",
+    params: [{ from, to: opts.token, data: encodeTransfer(opts.to, opts.amount), value: toHex(0n) }],
+  })) as string;
+  return hash;
+}

@@ -59,8 +59,10 @@ export function TransactionsCard() {
       amount: Number(w.amount),
       status: w.status,
       created_at: w.created_at,
+      tx_hash: (w as { payout_tx_hash?: string | null }).payout_tx_hash ?? undefined,
       wallet_address: w.wallet_address,
       note: w.note,
+
     })),
   ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 

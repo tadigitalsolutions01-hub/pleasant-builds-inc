@@ -1,7 +1,7 @@
 // Client-safe server-fn wrappers for Meta Word Space business logic.
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSupabaseAuth } from "@/integrations/backend/auth-middleware";
 
 export const getMyProfile = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -102,7 +102,7 @@ export const getTeamAtLevel = createServerFn({ method: "GET" })
   });
 
 export const getPackages = createServerFn({ method: "GET" }).handler(async () => {
-  const { supabase } = await import("@/integrations/supabase/client");
+  const { supabase } = await import("@/integrations/backend/client");
   const { data, error } = await supabase.from("packages").select("id, amount, is_active").order("amount");
   if (error) throw new Error(error.message);
   return data ?? [];

@@ -1,5 +1,5 @@
 // Server-only business logic. Never import from client.
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { supabaseAdmin } from "@/integrations/backend/admin.server";
 
 const ALLOWED_PACKAGES = [10, 20, 40, 80, 160, 320, 640, 1280, 2560];
 

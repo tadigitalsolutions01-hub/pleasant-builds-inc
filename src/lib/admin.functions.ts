@@ -1,7 +1,7 @@
 // Admin server functions. Every handler re-checks admin role via user_roles.
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSupabaseAuth } from "@/integrations/backend/auth-middleware";
 
 async function assertAdmin(userId: string, supabase: import("@supabase/supabase-js").SupabaseClient) {
   const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId).eq("role", "admin").maybeSingle();
@@ -12,7 +12,7 @@ export const adminGetSummary = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId, context.supabase);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/backend/admin.server");
     const [users, invs, wds, pending] = await Promise.all([
       supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("investments").select("amount"),
@@ -33,7 +33,7 @@ export const adminListUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId, context.supabase);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/backend/admin.server");
     const { data } = await supabaseAdmin
       .from("profiles")
       .select("id, username, wallet_address, sponsor_code, joined_at")
@@ -46,7 +46,7 @@ export const adminListPendingWithdrawals = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId, context.supabase);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/backend/admin.server");
     const { data: wds } = await supabaseAdmin
       .from("withdrawals")
       .select("id, user_id, kind, amount, wallet_address, status, created_at, payout_tx_hash, payout_status, payout_error")
@@ -77,7 +77,7 @@ export const adminListLocks = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId, context.supabase);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/backend/admin.server");
     const { data: locks } = await supabaseAdmin
       .from("capital_locks")
       .select("investment_id, user_id, unlock_at, unlocked_at, investments!inner(amount)")
@@ -131,7 +131,7 @@ export const adminUpdateSettings = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId, context.supabase);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/backend/admin.server");
     const patch: Record<string, unknown> = { ...data, updated_at: new Date().toISOString() };
     if (patch.deposit_wallet_address === "") patch.deposit_wallet_address = null;
     if (typeof patch.deposit_wallet_address === "string") {
@@ -149,7 +149,7 @@ export const adminListDeposits = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId, context.supabase);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/backend/admin.server");
     const { data: deps } = await supabaseAdmin
       .from("deposits")
       .select("id, user_id, package_amount, amount, tx_hash, status, block_number, from_address, note, created_at, verified_at")
@@ -180,7 +180,7 @@ export const adminBroadcast = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId, context.supabase);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/backend/admin.server");
     await supabaseAdmin.from("notifications").insert({
       user_id: null,
       type: "announcement",
@@ -194,7 +194,7 @@ export const adminListSalaryLevels = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId, context.supabase);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/backend/admin.server");
     const [levels, payouts] = await Promise.all([
       supabaseAdmin.from("salary_levels").select("*").order("level", { ascending: true }),
       supabaseAdmin
@@ -230,7 +230,7 @@ export const adminUpsertSalaryLevel = createServerFn({ method: "POST" })
   .validator((d: unknown) => salaryLevelSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId, context.supabase);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/backend/admin.server");
     const { error } = await supabaseAdmin
       .from("salary_levels")
       .upsert(data as never, { onConflict: "level" });
@@ -243,7 +243,7 @@ export const adminDeleteSalaryLevel = createServerFn({ method: "POST" })
   .validator((d: unknown) => z.object({ level: z.number().int().min(1).max(20) }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId, context.supabase);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/backend/admin.server");
     const { error } = await supabaseAdmin.from("salary_levels").delete().eq("level", data.level);
     if (error) throw new Error(error.message);
     return { ok: true };

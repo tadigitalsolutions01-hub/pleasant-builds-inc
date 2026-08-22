@@ -1,6 +1,6 @@
 // Server-only helpers for wallet-signature authentication. Never import from client.
 import { verifyMessage } from "ethers";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { supabaseAdmin } from "@/integrations/backend/admin.server";
 
 const NONCE_TTL_MINUTES = 5;
 

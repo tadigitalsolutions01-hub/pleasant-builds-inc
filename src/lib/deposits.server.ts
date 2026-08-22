@@ -1,5 +1,5 @@
 // Server-only on-chain USDT (BEP20) deposit verification.
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { supabaseAdmin } from "@/integrations/backend/admin.server";
 
 async function notifyAdmins(type: string, title: string, body?: string) {
   const { data } = await supabaseAdmin.from("user_roles").select("user_id").eq("role", "admin");
